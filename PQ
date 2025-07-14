@@ -1,0 +1,68 @@
+(frequency as text, startDate as date, dayDue as nullable number, workingType as nullable text, period as nullable text, calendarTable as table) as list =>
+let
+    // Set year range
+    years = { Date.Year(DateTime.LocalNow()) .. Date.Year(DateTime.LocalNow()) + 1 },
+    calendar = calendarTable,
+
+    GetNthWorkingDay = (year as number, month as number, n as number) =>
+        let
+            monthTable = Table.SelectRows(calendar, each Date.Year([Date]) = year and Date.Month([Date]) = month and [IsWorkingDay] = true),
+            result = try monthTable{n - 1}?[Date] otherwise null
+        in result,
+
+    GetNthCalendarDay = (year as number, month as number, n as number) =>
+        try #date(year, month, n) otherwise null,
+
+    GetLastWorkingDay = (year as number, month as number) =>
+        let
+            monthTable = Table.SelectRows(calendar, each Date.Year([Date]) = year and Date.Month([Date]) = month and [IsWorkingDay] = true),
+            result = List.Last(monthTable[Date])
+        in result,
+
+    Result =
+        if frequency = "Daily" then
+            let
+                allDays = Table.SelectRows(calendar, each [Date] >= startDate and ([IsWorkingDay] = true or workingType <> "Working"))
+            in allDays[Date]
+
+        else if frequency = "Monthly" then
+            List.Combine(
+                List.Transform(years, each
+                    let
+                        y = _,
+                        dates = List.Transform({1..12}, each
+                            if workingType = "Working" then GetNthWorkingDay(y, _, dayDue)
+                            else GetNthCalendarDay(y, _, dayDue)
+                        )
+                    in dates
+                )
+            )
+
+        else if frequency = "Annually" then
+            List.Transform(years, each
+                let
+                    month = if Text.Contains(period, "January") then 1 else 10,
+                    date = if workingType = "Working" then GetLastWorkingDay(_, month) else #date(_, month, 31)
+                in date
+            )
+
+        else if frequency = "Bi-Annually" then
+            List.Combine(
+                List.Transform(years, each
+                    let
+                        periods = {
+                            if Text.Contains(period, "January") then 
+                                if workingType = "Working" then GetLastWorkingDay(_, 1) else #date(_, 1, 31)
+                            else null,
+
+                            if Text.Contains(period, "October") then 
+                                if workingType = "Working" then GetNthWorkingDay(_, 10, 15) else #date(_, 10, 15)
+                            else null
+                        }
+                    in periods
+                )
+            )
+
+        else {null}
+in
+    Result
