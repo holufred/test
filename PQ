@@ -1,68 +1,81 @@
-(frequency as text, startDate as date, dayDue as nullable number, workingType as nullable text, period as nullable text, calendarTable as table) as list =>
+(frequency as text, startDate as date, monthlyDue as nullable number, 
+ workingType as nullable text, period as nullable text, 
+ deliveryText as nullable text, calendar as table) as list =>
+
 let
-    // Set year range
-    years = { Date.Year(DateTime.LocalNow()) .. Date.Year(DateTime.LocalNow()) + 1 },
-    calendar = calendarTable,
+    currentYear = Date.Year(DateTime.LocalNow()),
+    nextYear = currentYear + 1,
+    years = {currentYear, nextYear},
+    
+    GetWorkingDays = (year, month) =>
+        Table.SelectRows(calendar, each Date.Year([Date]) = year and Date.Month([Date]) = month and [IsWorkingDay] = true),
 
-    GetNthWorkingDay = (year as number, month as number, n as number) =>
-        let
-            monthTable = Table.SelectRows(calendar, each Date.Year([Date]) = year and Date.Month([Date]) = month and [IsWorkingDay] = true),
-            result = try monthTable{n - 1}?[Date] otherwise null
-        in result,
+    GetNthWorkingDay = (year, month, n) =>
+        let wd = GetWorkingDays(year, month) in try wd{n - 1}[Date] otherwise null,
 
-    GetNthCalendarDay = (year as number, month as number, n as number) =>
+    GetNthCalendarDay = (year, month, n) =>
         try #date(year, month, n) otherwise null,
 
-    GetLastWorkingDay = (year as number, month as number) =>
+    GetLastWorkingDay = (year, month) =>
+        let wd = GetWorkingDays(year, month) in try List.Last(wd[Date]) otherwise null,
+
+    GetWeekdayInMonth = (year, month, dayName) =>
         let
-            monthTable = Table.SelectRows(calendar, each Date.Year([Date]) = year and Date.Month([Date]) = month and [IsWorkingDay] = true),
-            result = List.Last(monthTable[Date])
-        in result,
+            dates = Table.SelectRows(calendar, each Date.Year([Date]) = year and Date.Month([Date]) = month and [WeekdayName] = dayName),
+            first = try dates{0}[Date] otherwise null
+        in first,
+
+    FromEndOfQuarter = (year, qEnd, offsetMonths, offsetWDays) =>
+        let
+            base = #date(year, qEnd, Date.DaysInMonth(#date(year, qEnd, 1))),
+            basePlusMonths = Date.AddMonths(base, offsetMonths),
+            wd = Table.SelectRows(calendar, each [Date] >= basePlusMonths and [IsWorkingDay]),
+            final = try wd{offsetWDays - 1}[Date] otherwise null
+        in final,
+
+    HandleMonthly = List.Combine(List.Transform(years, each 
+        let y = _, 
+            months = List.Transform({1..12}, each 
+                if workingType = "Working" and Value.Is(monthlyDue, number) then GetNthWorkingDay(y, _, monthlyDue)
+                else if workingType = "Calendar" and Value.Is(monthlyDue, number) then GetNthCalendarDay(y, _, monthlyDue)
+                else null)
+        in months)
+    ),
+
+    HandleDaily = Table.SelectRows(calendar, each [Date] >= startDate and [IsWorkingDay])[Date],
+
+    HandleWeekly = Table.SelectRows(calendar, each [Date] >= startDate and Text.Contains(deliveryText, [WeekdayName]))[Date],
+
+    HandleAnnually = List.Transform(years, each
+        if Text.Contains(Text.Lower(period), "march") then GetLastWorkingDay(_, 3)
+        else if Text.Contains(Text.Lower(period), "january") then GetLastWorkingDay(_, 1)
+        else null
+    ),
+
+    HandleBiAnnually = List.Transform(years, each {
+        if Text.Contains(Text.Lower(period), "october") then GetNthWorkingDay(_, 10, 15) else null,
+        if Text.Contains(Text.Lower(period), "january") then GetNthWorkingDay(_, 1, 15) else null
+    }),
+
+    HandleQuarterly = List.Combine(List.Transform(years, each 
+        let quarters = {
+            FromEndOfQuarter(_, 3, 0, 8),    // March
+            FromEndOfQuarter(_, 6, 2, 1),    // June + 2m
+            FromEndOfQuarter(_, 9, 0, 15),   // Sept + 15WD
+            FromEndOfQuarter(_, 12, 0, 10)   // Dec + 10WD
+        }
+        in quarters)
+    ),
 
     Result =
-        if frequency = "Daily" then
-            let
-                allDays = Table.SelectRows(calendar, each [Date] >= startDate and ([IsWorkingDay] = true or workingType <> "Working"))
-            in allDays[Date]
+        if frequency = "Daily" then HandleDaily
+        else if frequency = "Weekly" then HandleWeekly
+        else if frequency = "Monthly" then HandleMonthly
+        else if frequency = "Annually" then HandleAnnually
+        else if frequency = "Bi-Annually" then List.Combine(HandleBiAnnually)
+        else if frequency = "Quarterly" then HandleQuarterly
+        else if frequency = "On demand" then {} // Empty or handle specially
+        else {}
 
-        else if frequency = "Monthly" then
-            List.Combine(
-                List.Transform(years, each
-                    let
-                        y = _,
-                        dates = List.Transform({1..12}, each
-                            if workingType = "Working" then GetNthWorkingDay(y, _, dayDue)
-                            else GetNthCalendarDay(y, _, dayDue)
-                        )
-                    in dates
-                )
-            )
-
-        else if frequency = "Annually" then
-            List.Transform(years, each
-                let
-                    month = if Text.Contains(period, "January") then 1 else 10,
-                    date = if workingType = "Working" then GetLastWorkingDay(_, month) else #date(_, month, 31)
-                in date
-            )
-
-        else if frequency = "Bi-Annually" then
-            List.Combine(
-                List.Transform(years, each
-                    let
-                        periods = {
-                            if Text.Contains(period, "January") then 
-                                if workingType = "Working" then GetLastWorkingDay(_, 1) else #date(_, 1, 31)
-                            else null,
-
-                            if Text.Contains(period, "October") then 
-                                if workingType = "Working" then GetNthWorkingDay(_, 10, 15) else #date(_, 10, 15)
-                            else null
-                        }
-                    in periods
-                )
-            )
-
-        else {null}
 in
-    Result
+    List.Distinct(List.RemoveNulls(Result))
