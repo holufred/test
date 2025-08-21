@@ -3,40 +3,50 @@
  Power Query Function: fnGetDeliveryDates
 ===========================================
 DESCRIPTION:
-Generates a list of delivery dates from the report's start year up to the year after today
-based on structured scheduling metadata (frequency + free-text delivery rules).
+Generates a list of delivery dates from the report's start year up to the year after today,
+using frequency and delivery schedule text. Supports working day and calendar day logic,
+weekday-based logic, and end-of-period offsets for quarterly/bi-annual/annual frequencies.
 
 PARAMETERS:
 - frequency (text): Type of recurrence (e.g., "Monthly", "Quarterly", etc.)
 - startDate (date): First effective reporting date
-- deliveryText (nullable text): Raw delivery schedule description (e.g. "15 Working Day", "Tuesday and Friday")
-- calendar (table): A working day calendar table with the following columns:
+- deliveryText (nullable text): Description of schedule (e.g. "15 Working Day", "Tuesday")
+- calendar (table): Calendar table with columns:
     * Date (date)
     * IsWorkingDay (logical)
-    * WeekdayName (text, e.g., "Monday")
+    * WeekdayName (text)
 
 RETURNS:
 - List of delivery dates (list of date)
 */
 
 (frequency as text, startDate as date, deliveryText as nullable text, calendar as table) as list =>
-
 let
+    // Build year range from start year to next year after today
     years = { Date.Year(startDate) .. Date.Year(DateTime.LocalNow()) + 1 },
 
     // === Helper Functions ===
 
     GetWorkingDays = (year, month) =>
-        Table.SelectRows(calendar, each Date.Year([Date]) = year and Date.Month([Date]) = month and Record.FieldOrDefault(_, "IsWorkingDay", false) = true),
+        Table.SelectRows(calendar, each Date.Year([Date]) = year and Date.Month([Date]) = month and Record.FieldOrDefault(_, "IsWorkingDay", false)),
 
     GetNthWorkingDay = (year, month, n) =>
         let wd = GetWorkingDays(year, month) in try wd{n - 1}[Date] otherwise null,
 
     GetNthCalendarDay = (year, month, n) =>
-        try #date(year, month, n) otherwise null,
+        let
+            base = try #date(year, month, n) otherwise null,
+            adjusted = if base <> null and Record.FieldOrDefault(Table.SelectRows(calendar, each [Date] = base){0}, "IsWorkingDay", false) = false then
+                try Table.SelectRows(calendar, each [Date] > base and [IsWorkingDay]){0}[Date] otherwise null
+            else base
+        in adjusted,
 
     GetLastWorkingDay = (year, month) =>
-        let wd = GetWorkingDays(year, month) in try List.Last(wd[Date]) otherwise null,
+        let
+            lastCalendar = #date(year, month, Date.DaysInMonth(#date(year, month, 1))),
+            isWorking = Record.FieldOrDefault(Table.SelectRows(calendar, each [Date] = lastCalendar){0}, "IsWorkingDay", false),
+            result = if isWorking then lastCalendar else try Table.SelectRows(calendar, each [Date] > lastCalendar and [IsWorkingDay]){0}[Date] otherwise null
+        in result,
 
     GetWeekdayInMonth = (year, month, dayAbbr as text) =>
         let
@@ -44,13 +54,6 @@ let
             dates = Table.SelectRows(calendar, each Date.Year([Date]) = year and Date.Month([Date]) = month and [WeekdayName] = match),
             first = try dates{0}[Date] otherwise null
         in first,
-
-    FromEndOfMonth = (year, month, offsetWDays) =>
-        let
-            base = #date(year, month, Date.DaysInMonth(#date(year, month, 1))),
-            wd = Table.SelectRows(calendar, each [Date] > base and Record.FieldOrDefault(_, "IsWorkingDay", false) = true),
-            result = try wd{offsetWDays - 1}[Date] otherwise null
-        in result,
 
     FromEndOfQuarter = (year, quarterMonth, offsetMonths, offsetWDays) =>
         let
@@ -60,21 +63,26 @@ let
             result = try wd{offsetWDays - 1}[Date] otherwise null
         in result,
 
-    // === Frequency Logic ===
-
     ExtractLeadingNumber = (txt as text) as nullable number =>
         let match = Text.Select(txt, {"0".."9"}) in try Number.FromText(match) otherwise null,
 
+    // === Frequency Logic ===
+
     HandleMonthly = List.Combine(List.Transform(years, each 
-        let y = _, 
-            months = List.Transform({1..12}, each 
-                if deliveryText <> null and Text.Contains(Text.Lower(deliveryText), "calendar") then
-                    ExtractLeadingNumber(deliveryText)? |> each GetNthCalendarDay(y, _, _)
-                else if deliveryText <> null and Text.Contains(Text.Lower(deliveryText), "working") then
-                    ExtractLeadingNumber(deliveryText)? |> each GetNthWorkingDay(y, _, _)
-                else null)
-        in months)
-    ),
+        let 
+            y = _,
+            months = List.Transform({1..12}, (m) =>
+                let
+                    day = ExtractLeadingNumber(deliveryText)
+                in
+                    if deliveryText <> null and Text.Contains(Text.Lower(deliveryText), "calendar") and day <> null then
+                        GetNthCalendarDay(y, m, day)
+                    else if deliveryText <> null and Text.Contains(Text.Lower(deliveryText), "working") and day <> null then
+                        GetNthWorkingDay(y, m, day)
+                    else null
+            )
+        in months
+    )),
 
     HandleDaily = Table.SelectRows(calendar, each [Date] >= startDate and Record.FieldOrDefault(_, "IsWorkingDay", false))[Date],
 
@@ -85,8 +93,7 @@ let
                 dayList = List.Select({"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"}, each Text.Contains(lowerText, Text.Start(_, 3))),
                 dates = Table.SelectRows(calendar, each [Date] >= startDate and List.Contains(dayList, [WeekdayName]))[Date]
             in dates
-        else
-            {},
+        else {},
 
     HandleAnnually = List.Transform(years, each
         if deliveryText <> null and Text.Contains(Text.Lower(deliveryText), "march") then GetLastWorkingDay(_, 3)
