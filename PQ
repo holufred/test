@@ -1,221 +1,128 @@
- 
+/*
+===========================================
+ Power Query Function: fnGetDeliveryDates
+===========================================
+DESCRIPTION:
+Generates a list of delivery dates for the current and next year based on structured
+report scheduling metadata. Supports various scheduling formats and frequency types.
 
-  
-Design Principles for Reports
-This document is intended to provide a valuable guide to assist with Power BI report design, focusing on creating content which are functionally rich, aesthetically pleasing and performant.
-The document will discuss in detail the following principles which are essential to creating a good and performant user experience:
-Story-focused – User-Centered Design to focus on report personas to keep users engaged and empowered to act based on insights.
-Design principles – Creating simple, predictable and aesthetically pleasing reports.
-Layout & Structure – Create an organised report layout which is easy to navigate and draws user attention to the right areas.
-Frame components – Use specific techniques to aid page interaction.
-Chart Types –Use specific techniques to aid page interaction, use the right visual to display the right information.
-Design Standards – Use good colour combinations and choice of styles to enhance the reports effectiveness.
-Other performance considerations – Further suggested optimisations to consider when building Power BI reports.
-The factors that contribute to creating a good user experience and the factors that contribute to creating a good performing reports are often intertwined. In this document we will address both aspects in combination, thus ensuring advice is related and not contradictory. We also ensure that all design techniques for performance are included and called out where necessary.
-Contents
-Story-Focused
-Design Principles
-Layout & Structure
-Frame Components
-Chart Types
-Design Standards
-Other Performance Considerations
-UX Design Performance Checklist
-Story-focused
-Use User-Centered Design to focus on report personas and the actions they will take
-•	Design a report for a target audience
-•	Understand your target audience (that could be one or multiple Personas) you are designing for
-•	Understand their objectives and their responsibilities
-•	Understand their information needs and context
-Ask yourself the following questions?
-•	What are the benefits/outcomes you want to achieve from the report?
-•	What pain points are you trying to address?
-•	How will the users consume the information (what device will they use for example)
-Design Principles
-Creating simple, predictable and aesthetically pleasing reports
-Simplify
-Simplify choices by limiting what a user can do and select within a single page. The average person can only keep 7 items in their working memory, therefore try and limit the number of visuals on a page to between 5-7. Therefore, it is important to simplify and not try to present too much info at once. Avoid using complex visuals – each visual should convey a single message or view of the data.
-Limit
-This also is important from a performance perspective, each visual element on a page will fire off a query in Power BI, so the less items means better performance.1
-Alternatives
-If a report requires many elements or messages to convey, consider different techniques, for example splitting a report into multiple pages. If splitting the report, it is important to consider the navigation aspect and how users will move from one page to the next.
-You should also consider using drill-through reports, these take users through a journey to uncover varying levels of details (see Layout & Structure section).
-In addition, tool-tips are a good way to convey additional information, these will only run a query when displayed and can be set to only display the information based on the context of the highlighted item (which means less data and therefore more performant). Pages do not load until required.
-Design Iteratively
-Allow for a feedback loop between end users and content developers to ensure UX / UI criteria is met. Report design is an iterative process.
-Use Correct Data
-This is dependent on the visual and the message required to convey in the report. Data could be quantitative, ordinal (I.e., logical sequence) or categorial and displayed differently based on the data visualisations.
-1. Note performance of each item on a report can be viewed using Performance Analyzer:
-It is possible to evaluate the performance of each visual using the Power BI Performance Analyzer. The Performance Analyzer allows you to analyse the entirety of a page in terms of how long it takes to run. It also provides a breakdown of each individual visual and its component parts. Through this, you can then identify visuals that are causing a bottleneck in the report loading time. 
-Layout & Structure
-Create an organised report layout which is easy to navigate and draws user attention to the right areas
-The structure of the report should facilitate the users' decision flow through the data, for example:
+PARAMETERS:
+- frequency (text): Type of recurrence (e.g., "Monthly", "Quarterly", etc.)
+- startDate (date): First effective reporting date
+- deliveryText (nullable text): Raw delivery schedule description (e.g. "15 Working Day", "Tuesday and Friday")
+- calendar (table): A working day calendar table with the following columns:
+    * Date (date)
+    * IsWorkingDay (logical)
+    * WeekdayName (text, e.g., "Monday")
 
-Are we meeting our sales targets this month?
-	 
-Utilize bookmarks for different views rather than duplicate reports  Bookmarks allow users to navigate to different views of the same information thus sharing insights and building data stories. If you have similar report pages, consider using bookmarks when requiring a seamless interaction with different report layouts, or when there is not a need to load all visuals on report page, rather than creating multiple 
-What part of our portfolio is pages1 not performing?
-Use Tooltips and Drill Through to reveal more information
-To reduce the volume of information on a single page, use tooltips and drill through to display additional information and take users on a journey of data discovery, rather than trying to put all information on a single report page.
-As well as creating a better user experience where the user is not overloaded, this also means queries are separated out and not all run at the same time which has a performance benefit.
-Referring to the Personas, some users may only be interested in level 1 metrics, other more analytical users will want the drill functionality, therefore having a report structure where information is gradually revealed can be of great benefit and suit multiple user profiles
-1. More information on bookmarks and page navigation here: Create page and bookmark navigators - Power BI | Microsoft Docs. Bookmarks are used best when working for more advanced layouts, tabbed navigation, pop-up windows etc. However, Bookmarks require updating every time there is a change to report view, copy and paste function of bookmarks is not ideal, working with multiple bookmarks requires maintenance and can bog down report performance. Power BI Bookmarks Tips, Tricks, and Best Practices
- 
-In general, reports should observe the following guidelines
-•	Proximity – try and keep related info together, on the same page or same section of the page
-•	Alignment – ensure that objects align well with each other on a page
-•	Grey space – use effectively to group similar items together and to separate out from other elements on the report
-•	Grey card background can be broken out if reporting totally distinct metrics to guide users
-•	Cards can be aligned horizontally (or vertically if required) to give more room
-•	White AZ logo positioned in top left
-•	Report title placed upmost alongside logo
-Consider the following Layout formats for report builds and be mindful of your audience when selecting the Layout format. (i.e. left to right reading vs. right to left reading). These are considerations in how a user visually scans a page. The F Pattern
-•	First lines of text on a page receive more gazes than subsequent lines of text on the same page.
-•	First few words on the left of each line of text receive more fixations than subsequent words on the same line. People scan in F Pattern when the following 3 concepts are present
-•	A page or a section of a page includes text that has little or no formatting for the web. For example, it has a “wall of text” but no bolding, bullets, or subheadings.
-•	The user is trying to be most efficient on that page.
-•	The user is not so committed or interested that he is willing to read every word.
-You don’t always necessarily want to design against the F pattern, because this is the optimal scanning model most people use. Therefore, you can reduce the cognitive load of your reports by adhering to the F pattern (i.e. biggest most important information on top left, most niche or detailed information bottom right as people will stop as they get their answer) but it is also true sometimes you do want to break this pattern which can be achieved with the antidotes listed:
-Best Antidotes for F Pattern
-•	Include the most important points in the first two paragraphs on the page.
-•	Use headings and subheadings. Ensure they look more important, and are more visible, than normal text so users may distinguish them quickly.
-•	Start headings and subheadings with the words carrying most information: if users see only the first 2 words, they should still get the gist of the following section.
-•	Visually group small amounts of related content — for instance, by surrounding them with a border or using a different background.
-•	Bold important words and phrases.
-•	Take advantage of the different formatting of links, and ensure that links include information-bearing words (instead of generic “go”, “click here” or “more”). This technique also improves accessibility for users who hear links read aloud instead of scanning the content visually.
-•	Use bullets and numbers to call out items in a list or process.
-•	Cut unnecessary content.
-https://www.nngroup.com/articles/f-shaped-pattern-reading-web-content/
-A cover page should be included in all published reports. This should tell the user:
-•	What data/ information is presented and the source
-•	Any context needed to understand the data / information 
-•	How to navigate through the report (if required, although this should be intuitive)
-•	When the report structure was last updated
-•	Who the report owner is and how to contact them with queries
-If the product is a working prototype or draft, this should be clearly displayed on the cover page
- 
-Frame Components
-Use specific techniques to aid page interaction
-Creating a consistent page structure and way of navigating through the report helps users build familiarity
-Use visualisations to filter other visuals rather than slicers
-It is not always necessary to create lots of slicers on a page. Instead, consider using existing visuals to filter and cross highlight other visuals, avoiding the need to create a separate slicer
-If a slicer will only be used minimally, consider using a filter from the filter pane instead. The filter pane adds a filter to the query generated by Power BI and provides better performance over slicers. Filters also will not issue a query until the user interacts with them; conversely, slicers will.
-Place slicers together
-If you do need to use a slicer, place them in a separate area of the report canvas (for example the top or side) so they are together and consistent between report pages.
-Avoid unnecessary visual interaction
-Avoid every visual interacting with every visual if it isn’t required. For example, a KPI card would by default filter other visuals but, have no impact. By not disabling, if the user clicks on the visual it will run a query against the other visuals on the page but have no impact.
-You can change how visuals interact with each other by editing interactions. There are instances in which you will want to use different behaviour, such as cross filtering, cross highlighting, or no interaction.
-Consider default slicer selections
-Having a default slicer selection saved in the report will pre-filter some of the selections which can give the impression for a user that the initial report open time is quicker (depending on the data when compared to opening for all values). The user can then change the slicer selection for their use case after the report is loaded. Row-level security will also have a similar effect and pre-filter the report when opening and can improve opening times.
-Chart Types
-There are various types of chart for data visualisation in Power BI, choosing the right chart for the right data representation is important to ensure the right information is conveyed. Some options for different visualisation purposes are shared below:
-Single KPI – display single values with context
- 
-	Card Visual	KPI Visual	Changes over time – displays the changing trend of measures
- 	Line Chart	Spatial – display information on a geographic map
-	 	Map
-Comparison – displays measures compared by their magnitude
-Stacked Column Chart (when you have vertical space)
-Stacked Bar Chart (when you have horizontal space)	Part to whole – show values in relation to the total population
-	 	Donut chart	Distribution – displays the distribution of a measure   Clustered Column Chart
-Ranking/Prioritisation – displays values by their rank order
- 	Clustered Bar Chart	Correlation – show the relationship between measures
-	 	Scatter Plot	Narrative – used to add context and tell a story  	Smart narrative
-For further visualization ideas, including custom visualisations a useful (but slightly outdated) reference can be found here: Power BI Visuals Reference - SQLBI
-Use good colour combinations and choice of styles to enhance the reports effectiveness
-Use background images instead of shapes
-To create interesting and visually appealing reports, shapes are often used to bring report pages to life which are placed on the report canvas.  Alongside data driven visual, shapes also need to be loaded. If the report has too many shapes, this can add significant overhead to report render times.  
-Instead of using shapes, consider creating a single image file and adding this as a background image to the Power BI report (you can do this in PowerPoint for example).  
-AZ Standard Fonts
-Calibri should be used as the ‘functional typeface’ across reports
-Use of labels1
-•	Adjust label position
-•	Labels presented clearly so user can efficiently interpret the visual
-•	Adjust label colour for contrast
-•	Format labels for easy tracking of data analysis
-•	Avoid overwhelming labels
-•	Avoid causing confusion with multiple categories or data point labels when applicable
-Round numbers
-Power BI will generally default to round to the nearest hundredth (0.00) decimal when data type is set to decimal.
-Power BI will default to round to the nearest whole number when data type.
-Whether or not to round numbers is dependent on the audience and to what specificity/detail the data should be displayed.
-Power BI AZ JSON Theme
-Once a Power BI theme has been created using AZ colour palette, this can be exported as a custom theme file JSON and used as report theme file standard across AZ PBI reports.
-1. Optimize use of labels in Power BI reports - Power BI | Microsoft Docs
-More information on Power BI Template Themes: Use report themes in Power BI Desktop - Power BI | Microsoft Docs
- 
-	AstraZeneca Icon	 
-AstraZeneca Background (with Logo)
-68D2DF		53103D
+RETURNS:
+- List of delivery dates (list of date)
+*/
 
-830051		D0006F		F0AB00
-	 
+(frequency as text, startDate as date, deliveryText as nullable text, calendar as table) as list =>
 
-C4D600		9DA7AC		003865
-	
- 
-Design Standards
-Colour Balance and White Space
- 
- 
-Design Standards
-Tints & Shades for use in Graphs & Charts
- 
-Design Standards
-Formatting Dates
-Dates in reports should be formatted in such a way as to ensure they are never ambiguous, for a report used by a global audience there can be conflict between standard dates formats. 
-For example, users in the US would be familiar with mm/dd/yyyy format, whereas in Europe the dd/mm/yyyy is more prevalent. 
-For dates such as 02/08/2021 this can be problematic, as both interpretations are valid – this could legitimately refer to the Second of August or the Eighth of February. 
-Power BI tries to accommodate for this challenge by always showing the date (in the PowerBI Service) based on the users locale. However, when working globally this can also be confusing as people in different locales sharing screenshots of the reports may lead to confusion around dates.
-Therefore, we recommend using only non-ambiguous date types. These dates formats can be set at the dataset level, for example:
-Date	01 January 21
-Week No	2021 – W01
-Month & day	Jun 20
-Quarter No	2021 – Q1
-Design Standards
-Visual headers
-A visual header in Power BI refers to the popup menu that appears when a user hovers the mouse over a visual. This contains helpful options like the ability to see what a visual is filtered by and a menu of options such as exporting data, showing visual data as a table etc.
-However, as per the image on the right, they are enabled by default even for visuals like cards which do not require this menu. 
-Furthermore, it can interfere with other visuals – here the menu is partially blocking the slider above it. Visual headers have been improved in the latest release of Power BI so positioning of it will change depending on whether the visual has a title applied to it.
-For certain visuals, these headers are not required and can be turned off.  This can be done in the Header icons section of the visual's properties (see image on the left):
-Visual headers can be turned off by default. This is managed centrally by amending the theme file directly. Therefore, any user building from the standard AZ templates or using the provided theme file will have this design principle set automatically.
-However, this setting is not absolute. In the instance a visual header is required (i.e. to allow drilldowns) the header can be enabled manually on a per visual basis.
- 
-Other Performance Considerations
-Further suggested optimisations to consider when building Power BI reports
-Use Query Reduction Options
-If you have multiple slicers on a page, queries will run after selecting each one individually.  To avoid that happening consider adding an apply button. This button can be pressed after all slicer selections have been made to run the query once against the source, overall reducing the number of queries sent.  This can be turned on in the Report Options pane.
-Check for hidden visuals
-The Power BI z-order is the order in which visuals appear on the page.  You can use the selection pane to check that there are no visuals which are hidden in the background that could be causing slow performance.  
-Test the performance of custom visuals carefully
-Custom visuals can have additional overhead over the out of the box visuals as these visuals need to load into the browser before displaying data, so carefully consider before using. 
-If a report page with a custom visual performance is unacceptable to users but they also want to keep the visual, consider using the Performance Analyser to review the component elements of the visual.
-20
-UX Design for Performance Checklist
-Report Design: Visuals		
-If you have a slow page, considered the volume of visuals you have and if there is a more effective way of presenting the data	☐	
-If you have custom visuals, have you considered using a standard visual alternative	☐	
-Minimised the use of filters and slicers 	☐	
-Minimised slicers on the page, instead using the Filter Pane 	☐	
-Used dropdown option for any slicers 	☐	
-Have default slicer selections 	☐	
-Removed any hidden slicers 	☐	
-Remove unnecessary interactions between visuals	☐	
-Used tooltips and drill through to provide the user with the detailed information	☐	
-Used the Selection Pane to check the z-order for hidden visuals	☐	
-Combined visuals where possible, i.e., “Multi KPI card” rather than many single “KPI cards”	☐	
-Used bookmarks for different views rather than repeating similar pages	☐	
-Considered using multiple reports from a promoted/certified dataset rather than a report with high volume of pages	☐	
-Used a background image on your report rather than multiple shapes, images, and other objects	☐	
-If you have long/crowded page, consider splitting into multiple pages and adding report navigation	☐	
-21
-Further Reading
-Design effective reports in Power BI - Learn | Microsoft Docs
-Optimize use of labels in Power BI reports - Power BI | Microsoft Docs
-Power BI Visuals Reference – SQLBI
-F-shaped Reading Pattern
-Power BI Bookmarks Tips, Tricks, and Best Practices
-Create page and bookmark navigators - Power BI | Microsoft Docs
-Tooltips
-Drill Through
-22	APR 2023
+let
+    currentYear = Date.Year(DateTime.LocalNow()),
+    nextYear = currentYear + 1,
+    years = {currentYear, nextYear},
+
+    // === Helper Functions ===
+
+    GetWorkingDays = (year, month) =>
+        Table.SelectRows(calendar, each Date.Year([Date]) = year and Date.Month([Date]) = month and Record.FieldOrDefault(_, "IsWorkingDay", false) = true),
+
+    GetNthWorkingDay = (year, month, n) =>
+        let wd = GetWorkingDays(year, month) in try wd{n - 1}[Date] otherwise null,
+
+    GetNthCalendarDay = (year, month, n) =>
+        try #date(year, month, n) otherwise null,
+
+    GetLastWorkingDay = (year, month) =>
+        let wd = GetWorkingDays(year, month) in try List.Last(wd[Date]) otherwise null,
+
+    GetWeekdayInMonth = (year, month, dayAbbr as text) =>
+        let
+            match = List.First(List.Select({"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"}, each Text.StartsWith(_, Text.Proper(dayAbbr)))),
+            dates = Table.SelectRows(calendar, each Date.Year([Date]) = year and Date.Month([Date]) = month and [WeekdayName] = match),
+            first = try dates{0}[Date] otherwise null
+        in first,
+
+    FromEndOfMonth = (year, month, offsetWDays) =>
+        let
+            base = #date(year, month, Date.DaysInMonth(#date(year, month, 1))),
+            wd = Table.SelectRows(calendar, each [Date] > base and Record.FieldOrDefault(_, "IsWorkingDay", false) = true),
+            result = try wd{offsetWDays - 1}[Date] otherwise null
+        in result,
+
+    FromEndOfQuarter = (year, quarterMonth, offsetMonths, offsetWDays) =>
+        let
+            base = #date(year, quarterMonth, Date.DaysInMonth(#date(year, quarterMonth, 1))),
+            shifted = Date.AddMonths(base, offsetMonths),
+            wd = Table.SelectRows(calendar, each [Date] > shifted and Record.FieldOrDefault(_, "IsWorkingDay", false)),
+            result = try wd{offsetWDays - 1}[Date] otherwise null
+        in result,
+
+    // === Frequency Logic ===
+
+    HandleMonthly = List.Combine(List.Transform(years, each 
+        let y = _, 
+            months = List.Transform({1..12}, each 
+                if deliveryText <> null and Text.Contains(Text.Lower(deliveryText), "calendar") then
+                    try GetNthCalendarDay(y, _, Number.FromText(Text.Before(deliveryText, " "))) otherwise null
+                else if deliveryText <> null and Text.Contains(Text.Lower(deliveryText), "working") then
+                    try GetNthWorkingDay(y, _, Number.FromText(Text.Before(deliveryText, " "))) otherwise null
+                else null)
+        in months)
+    ),
+
+    HandleDaily = Table.SelectRows(calendar, each [Date] >= startDate and Record.FieldOrDefault(_, "IsWorkingDay", false))[Date],
+
+    HandleWeekly = 
+        if deliveryText <> null then
+            let
+                lowerText = Text.Lower(deliveryText),
+                dayList = List.Select({"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"}, each Text.Contains(lowerText, Text.Start(_, 3))),
+                dates = Table.SelectRows(calendar, each [Date] >= startDate and List.Contains(dayList, [WeekdayName]))[Date]
+            in dates
+        else
+            {},
+
+    HandleAnnually = List.Transform(years, each
+        if deliveryText <> null and Text.Contains(Text.Lower(deliveryText), "march") then GetLastWorkingDay(_, 3)
+        else if deliveryText <> null and Text.Contains(Text.Lower(deliveryText), "january") then GetLastWorkingDay(_, 1)
+        else null
+    ),
+
+    HandleBiAnnually = List.Combine(List.Transform(years, each
+        let 
+            periodList = Text.Split(Text.Lower(Text.Replace(Text.Replace(deliveryText, "&", ","), " and ", ",")), ","),
+            parsed = List.Transform(List.RemoveNulls(periodList), each 
+                if Text.Contains(_, "october") then GetNthWorkingDay(_, 10, 15)
+                else if Text.Contains(_, "january") then GetNthWorkingDay(_, 1, 15)
+                else if Text.Contains(_, "march") then GetNthWorkingDay(_, 3, 15)
+                else null)
+        in List.RemoveNulls(parsed)
+    )),
+
+    HandleQuarterly = List.Combine(List.Transform(years, each 
+        let quarters = {
+            if deliveryText <> null and Text.Contains(Text.Lower(deliveryText), "plus 8") then FromEndOfQuarter(_, 3, 0, 8) else null,
+            if deliveryText <> null and Text.Contains(Text.Lower(deliveryText), "2 months") then FromEndOfQuarter(_, 6, 2, 1) else null,
+            if deliveryText <> null and Text.Contains(Text.Lower(deliveryText), "plus 10") then FromEndOfQuarter(_, 12, 0, 10) else null,
+            if deliveryText <> null and Text.Contains(Text.Lower(deliveryText), "end of quarter") then FromEndOfQuarter(_, 9, 0, 0) else null
+        }
+        in List.RemoveNulls(quarters))
+    ),
+
+    Result =
+        if frequency = "Daily" then HandleDaily
+        else if frequency = "Weekly" then HandleWeekly
+        else if frequency = "Monthly" then HandleMonthly
+        else if frequency = "Annually" then HandleAnnually
+        else if frequency = "Bi-Annually" then HandleBiAnnually
+        else if frequency = "Quarterly" then HandleQuarterly
+        else if frequency = "On Demand" then {} // Treat as no recurrence
+        else {}
+
+in
+    List.Distinct(List.RemoveNulls(Result))
