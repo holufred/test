@@ -3,8 +3,8 @@
  Power Query Function: fnGetDeliveryDates
 ===========================================
 DESCRIPTION:
-Generates a list of delivery dates for the current and next year based on structured
-report scheduling metadata. Supports various scheduling formats and frequency types.
+Generates a list of delivery dates from the report's start year up to the year after today
+based on structured scheduling metadata (frequency + free-text delivery rules).
 
 PARAMETERS:
 - frequency (text): Type of recurrence (e.g., "Monthly", "Quarterly", etc.)
@@ -22,9 +22,7 @@ RETURNS:
 (frequency as text, startDate as date, deliveryText as nullable text, calendar as table) as list =>
 
 let
-    currentYear = Date.Year(DateTime.LocalNow()),
-    nextYear = currentYear + 1,
-    years = {currentYear, nextYear},
+    years = { Date.Year(startDate) .. Date.Year(DateTime.LocalNow()) + 1 },
 
     // === Helper Functions ===
 
@@ -64,13 +62,16 @@ let
 
     // === Frequency Logic ===
 
+    ExtractLeadingNumber = (txt as text) as nullable number =>
+        let match = Text.Select(txt, {"0".."9"}) in try Number.FromText(match) otherwise null,
+
     HandleMonthly = List.Combine(List.Transform(years, each 
         let y = _, 
             months = List.Transform({1..12}, each 
                 if deliveryText <> null and Text.Contains(Text.Lower(deliveryText), "calendar") then
-                    try GetNthCalendarDay(y, _, Number.FromText(Text.Before(deliveryText, " "))) otherwise null
+                    ExtractLeadingNumber(deliveryText)? |> each GetNthCalendarDay(y, _, _)
                 else if deliveryText <> null and Text.Contains(Text.Lower(deliveryText), "working") then
-                    try GetNthWorkingDay(y, _, Number.FromText(Text.Before(deliveryText, " "))) otherwise null
+                    ExtractLeadingNumber(deliveryText)? |> each GetNthWorkingDay(y, _, _)
                 else null)
         in months)
     ),
