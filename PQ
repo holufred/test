@@ -96,9 +96,36 @@ let
         else {},
 
     HandleAnnually = List.Transform(years, each
-        if deliveryText <> null and Text.Contains(Text.Lower(deliveryText), "march") then GetLastWorkingDay(_, 3)
-        else if deliveryText <> null and Text.Contains(Text.Lower(deliveryText), "january") then GetLastWorkingDay(_, 1)
-        else null
+        let
+            lowerText = Text.Lower(deliveryText),
+            result =
+                if lowerText <> null and Text.Contains(lowerText, "mid march") then
+                    let d = #date(_, 3, 15) in
+                        if Record.FieldOrDefault(Table.SelectRows(calendar, each [Date] = d){0}, "IsWorkingDay", false) then d
+                        else try Table.SelectRows(calendar, each [Date] > d and [IsWorkingDay]){0}[Date] otherwise null
+                else if Text.Contains(lowerText, "3rd week of march") then
+                let
+                    fridays = Table.SelectRows(calendar, each Date.Year([Date]) = _ and Date.Month([Date]) = 3 and [WeekdayName] = "Friday" and [IsWorkingDay]),
+                    result = try fridays{2}[Date] otherwise null
+                in result
+                else if Text.Contains(lowerText, "2nd week of march") then
+                let
+                    fridays = Table.SelectRows(calendar, each Date.Year([Date]) = _ and Date.Month([Date]) = 3 and [WeekdayName] = "Friday" and [IsWorkingDay]),
+                    result = try fridays{1}[Date] otherwise null
+                in result
+                else if Text.Contains(lowerText, "1st week of march") then
+                let
+                    fridays = Table.SelectRows(calendar, each Date.Year([Date]) = _ and Date.Month([Date]) = 3 and [WeekdayName] = "Friday" and [IsWorkingDay]),
+                    result = try fridays{0}[Date] otherwise null
+                in result
+                else if Text.Contains(lowerText, "end of march") then GetLastWorkingDay(_, 3)
+                else if Text.Contains(lowerText, "mid january") then
+                    let d = #date(_, 1, 15) in
+                        if Record.FieldOrDefault(Table.SelectRows(calendar, each [Date] = d){0}, "IsWorkingDay", false) then d
+                        else try Table.SelectRows(calendar, each [Date] > d and [IsWorkingDay]){0}[Date] otherwise null
+                else if Text.Contains(lowerText, "end of january") then GetLastWorkingDay(_, 1)
+                else null
+        in result
     ),
 
     HandleBiAnnually = List.Combine(List.Transform(years, each
