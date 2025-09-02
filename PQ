@@ -1,3 +1,13 @@
+GetRollingWorkingDays = (year as number, month as number, count as number) as list =>
+    let
+        startDate = #date(year, month, 1),
+        endDate = Date.AddDays(startDate, 40),  // enough headroom to reach 23rd WD even in holidays
+        rolling = Table.SelectRows(calendar, each [Date] >= startDate and [Date] <= endDate and [IsWorkingDay]),
+        result = List.FirstN(rolling[Date], count)
+    in
+        result
+
+
 /*
 ===========================================
  Power Query Function: fnGetDeliveryDates
