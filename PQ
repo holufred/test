@@ -1,3 +1,10 @@
+GetNthRollingWorkingDay = (year as number, month as number, n as number) as nullable date =>
+    let
+        list = GetRollingWorkingDays(year, month, n),
+        result = if List.Count(list) = n then list{n - 1} else null
+    in result
+
+
 GetRollingWorkingDays = (year as number, month as number, count as number) as list =>
     let
         startDate = #date(year, month, 1),
