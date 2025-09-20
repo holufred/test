@@ -1,195 +1,32 @@
-GetNthRollingWorkingDay = (year as number, month as number, n as number) as nullable date =>
-    let
-        list = GetRollingWorkingDays(year, month, n),
-        result = if List.Count(list) = n then list{n - 1} else null
-    in result
+Introduction
 
+As part of the 2025 Mid-Year Attestation process, a number of reporting and process issues were identified across PF1, APP, and NPF1 forms. To support continuous improvement, the table below sets out the issues, responsible owners, and agreed actions.
 
-GetRollingWorkingDays = (year as number, month as number, count as number) as list =>
-    let
-        startDate = #date(year, month, 1),
-        endDate = Date.AddDays(startDate, 40),  // enough headroom to reach 23rd WD even in holidays
-        rolling = Table.SelectRows(calendar, each [Date] >= startDate and [Date] <= endDate and [IsWorkingDay]),
-        result = List.FirstN(rolling[Date], count)
-    in
-        result
+Issues and Actions
+Form	Issue	Action
+PF1	Number of cards in issue should be required if there are actual gross values	Pulsion
+PF1	Request to remove non-active forms	UK Finance
+APP Forms	Banks need to align: Total Payment (PUSH 1) = Total Volume (PUSH 2 + 3); PUSH 1 case volume = PUSH 4 volume	UK Finance
+PF1	Need for estimation and clear communication to banks if it will be retained	UK Finance
+All Forms	Automatic templates for splitting biannual data	Pay.UK D&A
+APP Forms	CAMIS forms should display a note on matching requirement (see above)	Pulsion
+All Forms	Create Jira table template to track form opening, submission, and reloading	Pay.UK D&A
+PF1	Barclays and M&S to move to updated CAMIS template	UK Finance & Pay.UK D&A
+NPF1	Set up rules to check consistency (values vs cases) and apply forged instruction rules	Pulsion
+Next Steps
 
+Internal review – D&A Team to meet and confirm ownership, timelines, and any quick wins.
 
-/*
-===========================================
- Power Query Function: fnGetDeliveryDates
-===========================================
-DESCRIPTION:
-Generates a list of delivery dates from the report's start year up to the year after today
-based on structured scheduling metadata (frequency + free-text delivery rules).
+Engagement with Pulsion – raise tickets where possible, or arrange a session to review system-related actions.
 
-PARAMETERS:
-- frequency (text): Type of recurrence (e.g., "Monthly", "Quarterly", etc.)
-- startDate (date): First effective reporting date
-- deliveryText (nullable text): Raw delivery schedule description (e.g. "15 Working Day", "Tuesday and Friday")
-- calendar (table): A working day calendar table with the following columns:
-    * Date (date)
-    * IsWorkingDay (logical)
-    * WeekdayName (text, e.g., "Monday")
+Engagement with UK Finance – discuss form-level changes and communications to participants.
 
-RETURNS:
-- List of delivery dates (list of date)
-*/
+Progress tracking – use Jira template to track open actions until completion.
 
-(frequency as text, startDate as date, deliveryText as nullable text, calendar as table) as list =>
-let
-    years = { Date.Year(startDate) .. Date.Year(DateTime.LocalNow()) + 1 },
+D&A Team session – deliberate on the issues list, add or update items where required, and agree on priorities.
 
-    // === Helper Functions ===
+Engagement with Pulsion – raise tickets where possible, or arrange a session to review system-related actions.
 
-    GetWorkingDays = (year, month) =>
-        Table.SelectRows(calendar, each Date.Year([Date]) = year and Date.Month([Date]) = month and Record.FieldOrDefault(_, "IsWorkingDay", false) = true),
+Engagement with UK Finance – discuss form-level changes and communications to participants.
 
-    GetNthWorkingDay = (year, month, n) =>
-        let wd = GetWorkingDays(year, month) in try wd{n - 1}[Date] otherwise null,
-
-    GetNthCalendarDay = (year, month, n) =>
-        let base = try #date(year, month, n) otherwise null in
-        if base <> null and Record.FieldOrDefault(Table.SelectRows(calendar, each [Date] = base){0}?, "IsWorkingDay", false) = false then
-            try Table.SelectRows(calendar, each [Date] > base and [IsWorkingDay]){0}[Date] otherwise null
-        else base,
-
-    GetLastWorkingDay = (year, month) =>
-        let wd = GetWorkingDays(year, month) in try List.Last(wd[Date]) otherwise null,
-
-    GetNthFriday = (year, month, n) =>
-        let
-            fridays = Table.SelectRows(calendar, each Date.Year([Date]) = year and Date.Month([Date]) = month and [WeekdayName] = "Friday"),
-            result = try fridays{n - 1}[Date] otherwise null
-        in result,
-
-    FromEndOfMonth = (year, month, offsetWDays) =>
-        let
-            base = #date(year, month, Date.DaysInMonth(#date(year, month, 1))),
-            wd = Table.SelectRows(calendar, each [Date] > base and [IsWorkingDay]),
-            result = try wd{offsetWDays - 1}[Date] otherwise null
-        in result,
-
-    FromEndOfQuarter = (year, quarterMonth, offsetMonths, offsetWDays) =>
-        let
-            base = #date(year, quarterMonth, Date.DaysInMonth(#date(year, quarterMonth, 1))),
-            shifted = Date.AddMonths(base, offsetMonths),
-            wd = Table.SelectRows(calendar, each [Date] > shifted and [IsWorkingDay]),
-            result = try wd{offsetWDays - 1}[Date] otherwise null
-        in result,
-
-    AdjustIfNotWorking = (d as date) as nullable date =>
-        let
-            row = Table.SelectRows(calendar, each [Date] = d),
-            isWorking = if Table.RowCount(row) > 0 then Record.FieldOrDefault(row{0}, "IsWorkingDay", false) else false,
-            adjusted = if isWorking then d else try Table.SelectRows(calendar, each [Date] > d and [IsWorkingDay]){0}[Date] otherwise null
-        in adjusted,
-
-    // === Frequency Logic ===
-
-    HandleWeekly =
-        let
-            baseDates = Table.SelectRows(calendar, each [Date] >= startDate),
-            matchTable =
-                if deliveryText = "Tuesday and Friday" then Table.SelectRows(baseDates, each [WeekdayName] = "Tuesday" or [WeekdayName] = "Friday")
-                else if deliveryText = "Tuesday" then Table.SelectRows(baseDates, each [WeekdayName] = "Tuesday")
-                else if deliveryText = "Friday" then Table.SelectRows(baseDates, each [WeekdayName] = "Friday")
-                else if deliveryText = "Monday and Friday" then Table.SelectRows(baseDates, each [WeekdayName] = "Monday" or [WeekdayName] = "Friday")
-                else if deliveryText = "Monday" then Table.SelectRows(baseDates, each [WeekdayName] = "Monday")
-                else if deliveryText = "Monday to Friday" then Table.SelectRows(baseDates, each List.Contains({"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"}, [WeekdayName]))
-                else Table.SelectRows(baseDates, each false),
-            adjusted = Table.AddColumn(matchTable, "Adjusted", each AdjustIfNotWorking([Date])),
-            result = Table.SelectRows(adjusted, each [Adjusted] <> null)[Adjusted]
-        in
-            result,
-
-    HandleMonthly = List.Combine(List.Transform(years, each
-    let y = _,
-        months = List.Transform({1..12}, each
-            if deliveryText = "1 Working Day" then GetNthWorkingDay(y, _, 1)
-            else if deliveryText = "2 Working Day" then GetNthWorkingDay(y, _, 2)
-            else if deliveryText = "3 Working Day" then GetNthWorkingDay(y, _, 3)
-            else if deliveryText = "4 Working Day" then GetNthWorkingDay(y, _, 4)
-            else if deliveryText = "5 Working Day" then GetNthWorkingDay(y, _, 5)
-            else if deliveryText = "6 Working Day" then GetNthWorkingDay(y, _, 6)
-            else if deliveryText = "7 Working Day" then GetNthWorkingDay(y, _, 7)
-            else if deliveryText = "8 Working Day" then GetNthWorkingDay(y, _, 8)
-            else if deliveryText = "9 Working Day" then GetNthWorkingDay(y, _, 9)
-            else if deliveryText = "10 Working Day" then GetNthWorkingDay(y, _, 10)
-            else if deliveryText = "12 Working Day" then GetNthWorkingDay(y, _, 12)
-            else if deliveryText = "15 Working Day" then GetNthWorkingDay(y, _, 15)
-            else if deliveryText = "16 Working Day" then GetNthWorkingDay(y, _, 16)
-            else if deliveryText = "18 Working Day" then GetNthWorkingDay(y, _, 18)
-            else if deliveryText = "23 Working Day (10+13)" then null
-            else if deliveryText = "1st Working Day" then GetNthWorkingDay(y, _, 1)
-            else if deliveryText = "10 Calendar Day" then GetNthCalendarDay(y, _, 10)
-            else if deliveryText = "17 Calendar Day" then GetNthCalendarDay(y, _, 17)
-            else if deliveryText = "19 Calendar Day" then GetNthCalendarDay(y, _, 19)
-            else if deliveryText = "End of Month + 1 Working Day" then FromEndOfMonth(y, _, 1)
-            else if deliveryText = "End of Month + 2 Working Day" then FromEndOfMonth(y, _, 2)
-            else if deliveryText = "End of Month + 3 Working Day" then FromEndOfMonth(y, _, 3)
-            else if deliveryText = "End of Month + 4 Working Day" then FromEndOfMonth(y, _, 4)
-            else if deliveryText = "End of Month + 5 Working Day" then FromEndOfMonth(y, _, 5)
-            else if deliveryText = "End of Month + 6 Working Day" then FromEndOfMonth(y, _, 6)
-            else if deliveryText = "End of Month + 7 Working Day" then FromEndOfMonth(y, _, 7)
-            else if deliveryText = "End of Month + 8 Working Day" then FromEndOfMonth(y, _, 8)
-            else if deliveryText = "End of Month + 9 Working Day" then FromEndOfMonth(y, _, 9)
-            else if deliveryText = "End of Month + 10 Working Day" then FromEndOfMonth(y, _, 10)
-            else if deliveryText = "End of Month + 15 Working Day" then FromEndOfMonth(y, _, 15)
-            else if deliveryText = "3rd week of the month" then GetNthFriday(y, _, 3)
-            else if deliveryText = "2nd week of the month" then GetNthFriday(y, _, 2)
-            else null)
-    in List.RemoveNulls(months))
-    HandleQuarterly = List.Combine(List.Transform(years, each
-    let y = _,
-        qMonths = {3, 6, 9, 12},
-        all = List.Combine(List.Transform(qMonths, each
-            if deliveryText = "End of Quarter + 1 Month" then {Date.AddMonths(#date(y, _, Date.DaysInMonth(#date(y, _, 1))), 1)}
-            else if deliveryText = "End of Quarter + 1 Month + 10 Working Day" then {FromEndOfQuarter(y, _, 1, 10)}
-            else if deliveryText = "End of Quarter + 8 Working Day" then {FromEndOfQuarter(y, _, 0, 8)}
-            else if deliveryText = "End of Quarter + 5 Working Day" then {FromEndOfQuarter(y, _, 0, 5)}
-            else if deliveryText = "End of Quarter + 6 Working Day" then {FromEndOfQuarter(y, _, 0, 6)}
-            else if deliveryText = "End of Quarter + 10 Working Day" then {FromEndOfQuarter(y, _, 0, 10)}
-            else if deliveryText = "End of Quarter + 15 Working Day" then {FromEndOfQuarter(y, _, 0, 15)}
-            else if deliveryText = "End of Quarter + 2 Month" then {Date.AddMonths(#date(y, _, Date.DaysInMonth(#date(y, _, 1))), 2)}
-            else if deliveryText = "2nd week of the month" then {GetNthFriday(y, _, 2)}
-            else if deliveryText = "3rd week of the month" then {GetNthFriday(y, _, 3)}
-            else if deliveryText = "23 Working Day (10+13)" then {GetNthWorkingDay(y, _, 10), GetNthWorkingDay(y, _, 13)}
-            else if deliveryText = "20 Working Day" then {GetNthWorkingDay(y, _, 20)}
-            else if deliveryText = "18 Working Day" then {GetNthWorkingDay(y, _, 18)}
-            else {}))
-    in List.RemoveNulls(all))
-    HandleAnnually = List.Combine(List.Transform(years, each
-    let y = _,
-        date = 
-            if deliveryText = "End of March" then GetLastWorkingDay(y, 3)
-            else if deliveryText = "End of February" then GetLastWorkingDay(y, 2)
-            else if deliveryText = "End of January" then GetLastWorkingDay(y, 1)
-            else if deliveryText = "Mid July" then GetNthWorkingDay(y, 7, 15)
-            else if deliveryText = "Mid March" then GetNthWorkingDay(y, 3, 15)
-            else if deliveryText = "3rd week of March" then GetNthFriday(y, 3, 3)
-            else null
-    in if date <> null then {date} else {}))
-    HandleBiAnnually = List.Combine(List.Transform(years, each
-    let y = _,
-        dateList = 
-            if deliveryText = "Mid October" then { GetNthWorkingDay(y, 10, 15) }
-            else if deliveryText = "Mid October & Mid January" then { GetNthWorkingDay(y, 10, 15), GetNthWorkingDay(y, 1, 15) }
-            else if deliveryText = "Mid March and Mid October" then { GetNthWorkingDay(y, 3, 15), GetNthWorkingDay(y, 10, 15) }
-            else if deliveryText = "January and July" then { GetNthWorkingDay(y, 1, 15), GetNthWorkingDay(y, 7, 15) }
-            else {}
-    in List.RemoveNulls(dateList)))
-
-    HandleDaily = Table.SelectRows(calendar, each [Date] >= startDate and [IsWorkingDay])[Date],
-
-    Result =
-        if frequency = "Daily" then HandleDaily
-        else if frequency = "Weekly" then HandleWeekly
-        else if frequency = "Monthly" then HandleMonthly
-        else if frequency = "Annually" then HandleAnnually
-        else if frequency = "Bi-Annually" then HandleBiAnnually
-        else if frequency = "Quarterly" then HandleQuarterly
-        else {}
-
-in
-    List.Distinct(List.RemoveNulls(Result))
+Progress tracking – use Jira template to monitor open actions until completion.
