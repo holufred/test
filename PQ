@@ -1,32 +1,16 @@
-Introduction
-
-As part of the 2025 Mid-Year Attestation process, a number of reporting and process issues were identified across PF1, APP, and NPF1 forms. To support continuous improvement, the table below sets out the issues, responsible owners, and agreed actions.
-
-Issues and Actions
-Form	Issue	Action
-PF1	Number of cards in issue should be required if there are actual gross values	Pulsion
-PF1	Request to remove non-active forms	UK Finance
-APP Forms	Banks need to align: Total Payment (PUSH 1) = Total Volume (PUSH 2 + 3); PUSH 1 case volume = PUSH 4 volume	UK Finance
-PF1	Need for estimation and clear communication to banks if it will be retained	UK Finance
-All Forms	Automatic templates for splitting biannual data	Pay.UK D&A
-APP Forms	CAMIS forms should display a note on matching requirement (see above)	Pulsion
-All Forms	Create Jira table template to track form opening, submission, and reloading	Pay.UK D&A
-PF1	Barclays and M&S to move to updated CAMIS template	UK Finance & Pay.UK D&A
-NPF1	Set up rules to check consistency (values vs cases) and apply forged instruction rules	Pulsion
-Next Steps
-
-Internal review – D&A Team to meet and confirm ownership, timelines, and any quick wins.
-
-Engagement with Pulsion – raise tickets where possible, or arrange a session to review system-related actions.
-
-Engagement with UK Finance – discuss form-level changes and communications to participants.
-
-Progress tracking – use Jira template to track open actions until completion.
-
-D&A Team session – deliberate on the issues list, add or update items where required, and agree on priorities.
-
-Engagement with Pulsion – raise tickets where possible, or arrange a session to review system-related actions.
-
-Engagement with UK Finance – discuss form-level changes and communications to participants.
-
-Progress tracking – use Jira template to monitor open actions until completion.
+Analyst :=
+VAR ReportKey =
+    COALESCE (
+        SELECTEDVALUE ( 'Report'[Report Key] ),
+        SELECTEDVALUE ( Inventory[Report Key] ),
+        SELECTEDVALUE ( Activity[Report Key] )
+    )
+RETURN
+LOOKUPVALUE (
+    Staff[Report Analyst],
+    Staff[Staff Key],
+        LOOKUPVALUE (
+            Inventory[Staff Key],
+            Inventory[Report Key], ReportKey
+        )
+)
