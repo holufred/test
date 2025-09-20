@@ -2,15 +2,16 @@ Analyst :=
 VAR ReportKey =
     COALESCE (
         SELECTEDVALUE ( 'Report'[Report Key] ),
-        SELECTEDVALUE ( Inventory[Report Key] ),
         SELECTEDVALUE ( Activity[Report Key] )
     )
+VAR InvStaffKey =
+    CALCULATE (
+        MAX ( Inventory[Staff Key] ),
+        REMOVEFILTERS ( Inventory ),         -- clear context from Activity
+        Inventory[Report Key] = ReportKey
+    )
 RETURN
-LOOKUPVALUE (
-    Staff[Report Analyst],
-    Staff[Staff Key],
-        LOOKUPVALUE (
-            Inventory[Staff Key],
-            Inventory[Report Key], ReportKey
-        )
+CALCULATE (
+    MAX ( Staff[Report Analyst] ),
+    Staff[Staff Key] = InvStaffKey
 )
