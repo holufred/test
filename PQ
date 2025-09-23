@@ -1,19 +1,21 @@
-Analyst :=
-VAR ActReportKey =
-    SELECTEDVALUE ( Activity[Report Key] )
-VAR InvReportKey =
-    COALESCE (
-        ActReportKey,
-        SELECTEDVALUE ( Inventory[Report Key] )
-    )
-VAR InvStaffKey =
-    CALCULATE (
-        MAX ( Inventory[Staff Key] ),
-        REMOVEFILTERS ( Inventory ),
-        Inventory[Report Key] = InvReportKey
-    )
-RETURN
-LOOKUPVALUE (
-    Staff[Report Analyst],
-    Staff[Staff Key], InvStaffKey
-)
+Here’s a concise and professional draft you can send to the bank:
+
+
+---
+
+Subject: July and August 2025 Credit and Charge Submissions
+
+Dear [Bank Name],
+
+In your July and August 2025 credit and charge submissions, the “number of cards in issue” field is missing where gross values are recorded. Are you happy for us to roll forward June’s figures for both months until the correct values are available?
+
+We also noticed that in the credit submissions for both months, the total gross cases do not match the sum of the individual gross case categories. Could you please review and confirm the corrected figures?
+
+Best regards,
+Kayode
+
+
+---
+
+Would you like me to make the “roll forward June’s figures” line more formal (e.g. “provisionally apply June’s figures”) or keep it as plain and direct as this?
+
