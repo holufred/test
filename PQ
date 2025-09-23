@@ -1,15 +1,15 @@
-Here’s a concise and professional draft you can send to the bank:
+Here’s a concise and clear draft for your managers:
 
 
 ---
 
-Subject: July and August 2025 Credit and Charge Submissions
+Subject: Systemic Risk Update
 
-Dear [Bank Name],
+Hi All,
 
-In your July and August 2025 credit and charge submissions, the “number of cards in issue” field is missing where gross values are recorded. Are you happy for us to roll forward June’s figures for both months until the correct values are available?
+I’ve brought in the actual FPS data and compared it against the forecast, but the comparison isn’t fully valid as the forecast is based on cycle data while the actuals are traffic data. Ops are not fully confident and have reached out to HSBC to obtain their forecast data for a direct comparison with our predictions. For BACS and IPS, Ops have also asked for a variance check if we hold cycle data at the same granularity as the forecast. We don’t currently have that level of granularity.
 
-We also noticed that in the credit submissions for both months, the total gross cases do not match the sum of the individual gross case categories. Could you please review and confirm the corrected figures?
+On the New Daily FPS Peak dashboard, I’ll present the high-level view at tomorrow’s design review session, after which I’ll begin development.
 
 Best regards,
 Kayode
@@ -17,5 +17,5 @@ Kayode
 
 ---
 
-Would you like me to make the “roll forward June’s figures” line more formal (e.g. “provisionally apply June’s figures”) or keep it as plain and direct as this?
+Do you want me to make the tone a bit more solution-oriented (e.g. suggesting next steps), or keep it purely informational?
 
