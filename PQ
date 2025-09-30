@@ -1,54 +1,21 @@
-Here’s a strong, professional Result entry you can use for the Client Contract Management objective:
+Understood — here’s a more diplomatic rewrite that avoids saying the existing semantic models are “not suitable” but still explains why they won’t work for this case:
 
 
 ---
 
-Result:
-Developed three QA dashboards (PF1, NPF1, and APP forms) to streamline monthly validations. This has saved around nine hours per month for each form, reduced reliance on Access Databases, and strengthened the accuracy of data shared with UK Finance in line with reporting schedules.
+Subject: Update on Design Review Preparation
+
+Hi all,
+
+As suggested, I’ve explored the data options for the new reports. The existing semantic models are very useful for other reporting needs, but in this case they don’t provide the required level of granularity or the amount of historical data we need. Using models at a lower granularity would also place the performance load on Power BI rather than the database, which could affect efficiency.
+
+I’ve discussed this with Glen and identified an approach to pull the data with the necessary historical context and granularity into a new Dataflow. This Dataflow could then feed a dedicated semantic model for the reports if approved.
+
+Best regards,
+[Your Name]
 
 
 ---
 
-Do you want me to also make a parallel version for the Power BI Migration project objective so that all your results are written in the same polished style?
-
-Perfect — here’s a refined version that keeps it straightforward, professional, and in line with your own style:
-
-
----
-
-Result:
-Provided technical guidance to analysts during the migration of legacy reports to Power BI, resolving issues to keep timelines on track. Also ran knowledge-sharing sessions with team members to build confidence and consistency in the migration process.
-
-
----
-
-Do you want me to now rewrite the Data Visualisation Standard and Client Contract Management results in this same tone so all three align?
-
-
-Here’s a clear and professional version of the Result for the Report inventory and schedule automation objective that matches the straightforward tone of your other entries:
-
-
----
-
-Result:
-Created a central Excel template capturing all BAU reporting activities with built-in validation for consistency. Developed a connected Power BI report that dynamically generates the reporting schedule, helps managers track team time commitments, and supports forward planning to build resilience in the reporting process.
-
-
----
-
-Do you also want me to help shape the Result wording for the CP1/CP4 process improvements objective so the whole set feels aligned?
-
-Here’s a concise and professional Result entry for the CP1/CP4 process improvements objective:
-
-
----
-
-Result:
-Worked with analysts to build automatic validation and comparison for CP1/CP4 forms within a dashboard. This is expected to save at least 50 hours across all analysts and has created enough efficiency to free one analyst from the QA process.
-
-
----
-
-Would you like me to compile all your objectives/results into a single clean version so they flow consistently in the same tone for submission?
-
+Do you want me to make the last line a bit stronger, e.g. “I’ll wait for your approval before proceeding”, so they know you’re explicitly holding off?
 
