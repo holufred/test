@@ -1,23 +1,28 @@
-Got it — you want the apology up front, keep it professional, then outline the next steps without sounding defensive or over-explaining. Here’s a polished version:
+Ah right — good catch. Power BI tooltips in info icons don’t allow bullets, line breaks are better. Here’s a Power BI–ready version that stays concise and readable when someone hovers:
 
 
 ---
 
-Subject: Update on Corporate Governance KPI Dashboard Actions
+Peak Position info text
 
-Hi Aaron,
-
-Apologies for the delay in progressing this. I’ve implemented some of the agreed actions and will complete the remainder by COB today.
-
-The next step will be to set up a SharePoint site as we discussed. Once that is in place, I will prepare the architecture and take it through the internal D&A design review session for governance and wider team visibility (currently planned for 5 November). I’ll update you once it is published.
-
-For awareness, I will be away from 6 October and returning on 20 October.
-
-Best regards,
-Key
+Peak Position shows the largest net position reached in a day.
+Negative means net debit (sent more than received).
+Positive means net credit (received more than sent).
+The most negative point is used to calculate NSC usage.
 
 
 ---
 
-Would you like me to make the “apology” line softer (e.g., “Thank you for your patience as I’ve been progressing this” instead of “Apologies for the delay”)?
+NSC Usage (%) info text
+
+NSC Usage is the ratio of a participant’s peak debit position to their Net Sender Cap.
+Debit peaks are shown as positive usage values.
+Higher percentage means closer to the cap.
+Colour coding: Green less than 70 percent, Amber 70 to 85 percent, Red greater than 85 percent.
+NSC usage greater than 90 percent is auto flagged as a potential liquidity concern.
+
+
+---
+
+Would you like me to also make a shorter “one-liner” version of each (for when space is very tight), or keep this slightly more descriptive style?
 
