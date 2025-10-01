@@ -1,21 +1,23 @@
-Understood — here’s a more diplomatic rewrite that avoids saying the existing semantic models are “not suitable” but still explains why they won’t work for this case:
+Got it — you want the apology up front, keep it professional, then outline the next steps without sounding defensive or over-explaining. Here’s a polished version:
 
 
 ---
 
-Subject: Update on Design Review Preparation
+Subject: Update on Corporate Governance KPI Dashboard Actions
 
-Hi all,
+Hi Aaron,
 
-As suggested, I’ve explored the data options for the new reports. The existing semantic models are very useful for other reporting needs, but in this case they don’t provide the required level of granularity or the amount of historical data we need. Using models at a lower granularity would also place the performance load on Power BI rather than the database, which could affect efficiency.
+Apologies for the delay in progressing this. I’ve implemented some of the agreed actions and will complete the remainder by COB today.
 
-I’ve discussed this with Glen and identified an approach to pull the data with the necessary historical context and granularity into a new Dataflow. This Dataflow could then feed a dedicated semantic model for the reports if approved.
+The next step will be to set up a SharePoint site as we discussed. Once that is in place, I will prepare the architecture and take it through the internal D&A design review session for governance and wider team visibility (currently planned for 5 November). I’ll update you once it is published.
+
+For awareness, I will be away from 6 October and returning on 20 October.
 
 Best regards,
-[Your Name]
+Key
 
 
 ---
 
-Do you want me to make the last line a bit stronger, e.g. “I’ll wait for your approval before proceeding”, so they know you’re explicitly holding off?
+Would you like me to make the “apology” line softer (e.g., “Thank you for your patience as I’ve been progressing this” instead of “Apologies for the delay”)?
 
