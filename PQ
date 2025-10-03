@@ -1,28 +1,23 @@
-Ah right — good catch. Power BI tooltips in info icons don’t allow bullets, line breaks are better. Here’s a Power BI–ready version that stays concise and readable when someone hovers:
+Here’s a concise draft you can use with Steven (keeping it clear, polite, and precise so he focuses only on what you’re asking, while being manager-appropriate for CC):
 
 
 ---
 
-Peak Position info text
+Subject: Data for Bi-Directional Forecast vs Actuals
 
-Peak Position shows the largest net position reached in a day.
-Negative means net debit (sent more than received).
-Positive means net credit (received more than sent).
-The most negative point is used to calculate NSC usage.
+Hi Steven,
 
+Thanks for pointing me to the right tables. I need your guidance on which columns to use for extracting the required volumes, as there are a few options and I want to be sure I’m aligning with the right ones.
 
----
+For clarity, I’d like to display the comparison on this dashboard [link], where the requirement is to compare the bi-directional forecast against the actuals.
 
-NSC Usage (%) info text
+Also, one of the points raised at the design review was to ensure all joins to reference data are based on IDs rather than names. Would it be possible to retrofit the GPS, BACS, and ICS tables in the forecasting dataset with participant IDs, so we keep things consistent and scalable?
 
-NSC Usage is the ratio of a participant’s peak debit position to their Net Sender Cap.
-Debit peaks are shown as positive usage values.
-Higher percentage means closer to the cap.
-Colour coding: Green less than 70 percent, Amber 70 to 85 percent, Red greater than 85 percent.
-NSC usage greater than 90 percent is auto flagged as a potential liquidity concern.
+Best regards,
+[Your Name]
 
 
 ---
 
-Would you like me to also make a shorter “one-liner” version of each (for when space is very tight), or keep this slightly more descriptive style?
+Do you want me to make the ask about “retrofit” sound more like a request for feasibility (e.g. “can you confirm if this can be done”) rather than a direct instruction? That might sit better if you’re CC’ing your manager.
 
