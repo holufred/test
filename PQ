@@ -1,19 +1,11 @@
-Got it — here’s a cleaner and more professional version without “marked”:
-
-
----
-
-Subject: June/July Reports — Update
-
-Hi Yousef,
-
-The completed deliverables are reflected in the tracker, and we are on track to complete the remaining items next week. We have identified an issue with one of the tabs on the FFA Final Values Appendices (PF1 Plastic), which appears to have been present for some time. We will proceed with completion and share further details next week, including the impact and proposed remediation.
-
-Best regards,
-[Your Name]
-
-
----
-
-Do you want me to make the FFA issue sentence even lighter — for example, “we noted an issue” instead of “we have identified an issue”? That would make it more diplomatic.
-
+VAR _VALUE = ABS(SELECTEDMEASURE())
+VAR _Format = 
+ SWITCH(
+ TRUE(),
+ _VALUE >= 1000000000, "$ #,#0,,,.00B; $ #,#0,,,.00B",
+ _VALUE >= 1000000, "$ #,#0,,.00M; $ #,#0,,.00M",
+ _VALUE >= 1000, "$ #,#0,.0K; $ #,#0,.0K",
+ "$ #,0.00; $ #,0.00"
+ )
+RETURN
+""""&FORMAT(SELECTEDMEASURE(), _Format)&""""&""
