@@ -1,11 +1,18 @@
-VAR _VALUE = ABS(SELECTEDMEASURE())
-VAR _Format = 
- SWITCH(
- TRUE(),
- _VALUE >= 1000000000, "$ #,#0,,,.00B; $ #,#0,,,.00B",
- _VALUE >= 1000000, "$ #,#0,,.00M; $ #,#0,,.00M",
- _VALUE >= 1000, "$ #,#0,.0K; $ #,#0,.0K",
- "$ #,0.00; $ #,0.00"
- )
-RETURN
-""""&FORMAT(SELECTEDMEASURE(), _Format)&""""&""
+Got it. You want a smooth, professional note that reads like internal stakeholder communication, not transactional bullet points. Here is a stronger version with proper flow:
+
+
+---
+
+Hi Yousef,
+
+We have now received Monzo’s submissions, with the exception of the September PF1. During our checks we identified that the August and September APP values are not aligned across the forms. We have reopened the forms and notified Monzo so they can correct this. Daniel is reviewing the NPF submissions and will provide an update later today.
+
+Once Monzo has resubmitted, please confirm if you would like us to regenerate the July and August reports.
+
+Thanks,
+Kayode
+
+
+---
+
+This avoids sounding abrupt, keeps accountability clear, and closes with a clear decision request.
