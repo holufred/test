@@ -1,22 +1,9 @@
-Here’s a polished version of your email:
+Hi Lindsay
 
+I can see the value in adding peak positions to previous months and I’ll work that in.
 
----
+For the Peak Position page, the issue comes from cases where a bank records the same NSC usage more than once in a month, such as Access Bank in August 2025. I’ll adjust the sorting so it still works as expected.
 
-Subject: IMD Meeting Update and Forecasting Context
+From the D&A design review, there was also a suggestion to include visuals that help spot trends. If that’s of interest, it would be helpful to know the business questions you’d want those visuals to answer.
 
-Hi Monsur,
-
-I had a brief IMD session with the Ops team earlier. One of their requests is to include an Actuals Comparison page (via a bookmark) to show daily variances between forecast and actuals.
-
-They also noted that the widest variances occur on the first and last working days of each month and asked why the forecast doesn’t account for these patterns, even after I clarified that it’s based on a top-down approach.
-
-I’ve scheduled next Wednesday for a high-level design walkthrough of the proposed comparison page. Please let me know your availability before then so I can get more context on the forecasting methodology.
-
-Best,
-Kayode
-
-
----
-
-Would you like me to make it slightly shorter or keep this level of detail?
+Happy to proceed once I hear from you.
