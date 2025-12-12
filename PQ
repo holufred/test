@@ -1,9 +1,67 @@
-Hi Lindsay
+Bridge_CustomPeriod_Period :=
+VAR MaxDueDate =
+    CALCULATE (
+        MAX ( Dim_Period[Due_Date] ),
+        ALL ( Dim_Period )
+    )
+RETURN
+UNION (
+    -- Current year
+    ADDCOLUMNS (
+        FILTER (
+            ALL ( Dim_Period ),
+            Dim_Period[Year] = YEAR ( MaxDueDate )
+        ),
+        "CustomPeriodID", 1
+    ),
+    -- Last 6 months
+    ADDCOLUMNS (
+        FILTER (
+            ALL ( Dim_Period ),
+            Dim_Period[Due_Date] > EDATE ( MaxDueDate, -6 )
+                && Dim_Period[Due_Date] <= MaxDueDate
+        ),
+        "CustomPeriodID", 2
+    ),
+    -- Last 1 year
+    ADDCOLUMNS (
+        FILTER (
+            ALL ( Dim_Period ),
+            Dim_Period[Due_Date] > EDATE ( MaxDueDate, -12 )
+                && Dim_Period[Due_Date] <= MaxDueDate
+        ),
+        "CustomPeriodID", 3
+    ),
+    -- Last 2 years
+    ADDCOLUMNS (
+        FILTER (
+            ALL ( Dim_Period ),
+            Dim_Period[Due_Date] > EDATE ( MaxDueDate, -24 )
+                && Dim_Period[Due_Date] <= MaxDueDate
+        ),
+        "CustomPeriodID", 4
+    ),
+    -- Last 3 years
+    ADDCOLUMNS (
+        FILTER (
+            ALL ( Dim_Period ),
+            Dim_Period[Due_Date] > EDATE ( MaxDueDate, -36 )
+                && Dim_Period[Due_Date] <= MaxDueDate
+        ),
+        "CustomPeriodID", 5
+    )
+)
 
-I can see the value in adding peak positions to previous months and I’ll work that in.
-
-For the Peak Position page, the issue comes from cases where a bank records the same NSC usage more than once in a month, such as Access Bank in August 2025. I’ll adjust the sorting so it still works as expected.
-
-From the D&A design review, there was also a suggestion to include visuals that help spot trends. If that’s of interest, it would be helpful to know the business questions you’d want those visuals to answer.
-
-Happy to proceed once I hear from you.
+Dim_CustomPeriod :=
+DATATABLE (
+    "CustomPeriodID", INTEGER,
+    "CustomPeriodName", STRING,
+    "SortOrder", INTEGER,
+    {
+        { 1, "Current year", 1 },
+        { 2, "Last 6 months", 2 },
+        { 3, "Last 1 year", 3 },
+        { 4, "Last 2 years", 4 },
+        { 5, "Last 3 years", 5 }
+    }
+)
