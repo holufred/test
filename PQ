@@ -1,67 +1,16 @@
-Bridge_CustomPeriod_Period :=
-VAR MaxDueDate =
-    CALCULATE (
-        MAX ( Dim_Period[Due_Date] ),
-        ALL ( Dim_Period )
-    )
-RETURN
-UNION (
-    -- Current year
-    ADDCOLUMNS (
-        FILTER (
-            ALL ( Dim_Period ),
-            Dim_Period[Year] = YEAR ( MaxDueDate )
-        ),
-        "CustomPeriodID", 1
-    ),
-    -- Last 6 months
-    ADDCOLUMNS (
-        FILTER (
-            ALL ( Dim_Period ),
-            Dim_Period[Due_Date] > EDATE ( MaxDueDate, -6 )
-                && Dim_Period[Due_Date] <= MaxDueDate
-        ),
-        "CustomPeriodID", 2
-    ),
-    -- Last 1 year
-    ADDCOLUMNS (
-        FILTER (
-            ALL ( Dim_Period ),
-            Dim_Period[Due_Date] > EDATE ( MaxDueDate, -12 )
-                && Dim_Period[Due_Date] <= MaxDueDate
-        ),
-        "CustomPeriodID", 3
-    ),
-    -- Last 2 years
-    ADDCOLUMNS (
-        FILTER (
-            ALL ( Dim_Period ),
-            Dim_Period[Due_Date] > EDATE ( MaxDueDate, -24 )
-                && Dim_Period[Due_Date] <= MaxDueDate
-        ),
-        "CustomPeriodID", 4
-    ),
-    -- Last 3 years
-    ADDCOLUMNS (
-        FILTER (
-            ALL ( Dim_Period ),
-            Dim_Period[Due_Date] > EDATE ( MaxDueDate, -36 )
-                && Dim_Period[Due_Date] <= MaxDueDate
-        ),
-        "CustomPeriodID", 5
-    )
-)
+Hi John,
 
-Dim_CustomPeriod :=
-DATATABLE (
-    "CustomPeriodID", INTEGER,
-    "CustomPeriodName", STRING,
-    "SortOrder", INTEGER,
-    {
-        { 1, "Current year", 1 },
-        { 2, "Last 6 months", 2 },
-        { 3, "Last 1 year", 3 },
-        { 4, "Last 2 years", 4 },
-        { 5, "Last 3 years", 5 }
-    }
-)
+To clarify the current operating model, the Data function is now split between D&AI and Data Engineering, with clear ownership boundaries. D&AI focuses on analytics, reporting, and data consumption, while Data Engineering owns data ingestion, pipelines, refresh processes, and technical remediation.
+
+Based on this structure, and in alignment with the self-serve model being adopted by the business, I have summarised ownership and next steps below.
+
+Item| Description| Primary Ownership| Notes / Next Steps
+CASS MCA 1149| Monthly data download used for regulatory reporting| Data Engineering| This is a data extraction and ingestion process. Ownership therefore sits with Data Engineering rather than D&AI. Any issues relating to refresh, automation, or data availability should be progressed with Engineering.
+CISA Monthly Volumetric & Compliance Reports| Monthly reports generated from a master spreadsheet| Product (master file) / Data Engineering (technical issues)| In line with the self-serve model, ownership of the master file that generates the reports should sit with the Product team. Any technical or data issues would be resolved with Data Engineering. D&AI can support the reporting layer once data is available in a stable form.
+SSCC Monthly Dashboard| Power BI dashboard sourced from upstream data| Data Engineering (pipelines) / D&AI (reporting layer)| The dashboard includes upstream engineering components. D&AI can maintain the Power BI report, while data refresh and pipeline dependencies remain with Data Engineering.
+Engineering Capacity| Current delivery constraints| —| As noted previously, the Engineering team has been impacted by capacity constraints and will pick these up once capacity allows.
+
+Happy to discuss further if useful.
+
+Kind regards,
+Kayode
