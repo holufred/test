@@ -1,25 +1,8 @@
-Perfect, this helps a lot. I’ll keep this practical, senior-level, and measurable, and avoid overlap between objectives.
-Here’s a clean version with 4 objectives and 2 targets each, with clear separation between reporting, systems/resilience, insight, and personal development.
-Objective 1: Strengthen BAU reporting and reporting governance
-Focus: Reliability, clarity, and control of reporting.
-Targets:
-Consolidate the reporting inventory into a single, maintained source of truth and deliver a dashboard that shows coverage, ownership, refresh status, and key dependencies.
-Reduce recurring BAU reporting issues by introducing at least 3 standardised QA or validation checks across priority reports or datasets.
-Objective 2: Improve system resilience and enable self-service analytics
-Focus: Stability, performance, and reducing pressure on core systems.
-Targets:
-Deliver at least 2 dashboards that enable the business to perform self-service analysis and basic data quality or operational checks without analyst intervention.
-Migrate or refactor at least 1 high-usage dataset or report to a more robust and efficient data flow or model, reducing refresh time, query load, or operational risk.
-Objective 3: Increase business insight and decision support
-Focus: Moving from reporting to insight and action.
-Targets:
-Deliver at least 1 new insight-led dashboard or analytical product that helps the business understand performance, risk, or trends and supports decision-making.
-Lead or co-lead at least 2 pieces of analysis that result in a clear recommendation, action, or change in process agreed with stakeholders.
-Objective 4: Personal and professional development
-Focus: Skills, visibility, and bringing value back to the team.
-Targets:
-Make measurable progress toward the CDMP certification (or complete it, depending on timeframe), with agreed milestones.
-Attend at least 2 data events, meetups, or hackathons and share key learnings with the team or apply at least one idea in day-to-day work.
-If you want, I can:
-Tune this to your company’s performance template language, or
-Make it slightly more conservative or more ambitious depending on how strict scoring usually is where you work.
+Dear all,
+
+I wanted to flag that we may not be able to meet the deadline for the January Cap Management packs due tomorrow, 12 February.
+
+In previous years, an annual review was carried out to set the benchmark date. As this did not take place in 2025, the packs have picked December 2025 rather than December 2024, which was the last review point. The Data Engineering team is working on resolving this, and I’ll keep you updated on progress and revised timings.
+
+Kind regards,
+Kayode
