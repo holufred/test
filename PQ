@@ -1,8 +1,3 @@
-Dear all,
-
-I wanted to flag that we may not be able to meet the deadline for the January Cap Management packs due tomorrow, 12 February.
-
-In previous years, an annual review was carried out to set the benchmark date. As this did not take place in 2025, the packs have picked December 2025 rather than December 2024, which was the last review point. The Data Engineering team is working on resolving this, and I’ll keep you updated on progress and revised timings.
-
-Kind regards,
-Kayode
+I’d like to request sponsorship to sit the CDMP Practitioner certification. It involves three exams (Fundamentals and two specialist exams) and covers data architecture, modelling, integration, model lifecycle and data quality.
+In my role, a lot of my work sits at the point where raw data becomes analytical datasets. As we expand AI and more advanced analytics, the quality of that foundation matters even more. Clear modelling, consistent definitions and stronger control over how datasets evolve will help reduce ambiguity before data feeds reports or models.
+This would help me apply more structured design principles across our analytical layer and improve reliability as we scale
