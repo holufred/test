@@ -1,9 +1,16 @@
-Quick update on the validation work.
-I have not been able to progress Alteryx yet, as the licence issue has come up again. I have raised this with IT.
-The Power Apps interface is now complete and working, including the generation of rule validated plans. I also reached out to Garima last week, as requested by Monsur, and understand the Copilot access ticket is now with IT.
-Copilot may be the better fit here, as the data sources already sit within existing dataflows, which should give it better context and help improve the validation process.
-Once Andres is back next week, we will arrange a follow up with Lindsay to show progress. I have also scheduled the initial high level design session for 8 June.
-Next week, I will focus on improving the rule validation and adding audit logging while we await the Copilot rollout.
+Listen to find win-wins
+I have made more effort to understand the situation from the stakeholder’s point of view before deciding on the best approach. On the Tubemap report, I considered what users would need during an operational incident, not only what the data could show. That helped me think more carefully about layout, navigation and wording, so the report is easier to use and more likely to be trusted without repeated explanation from D&A.
+Influence with courage
+I have been willing to question existing processes where I felt they could be improved, while keeping the discussion practical and evidence based. During the monthly UK Finance validation cycle, I challenged unusual movements and gaps in checks rather than treating them as routine. This helped improve the way issues are reviewed before submission and reduced the chance of avoidable follow up after delivery.
+Go horizontal first
+I have tried to bring the right people into the conversation early, rather than solving things only within my own area. While supporting the reporting inventory and delivery dashboard work, I had to think beyond the dashboard itself and consider how updates would be provided, who owned the information, and how the process could work consistently across D&A and the wider business.
+Take ownership
+I have taken responsibility for moving work forward even where the route was not fully defined at the start. With the CP1/CP4 reporting work, I worked through the manual process, understood where time was being lost, built a more efficient output and followed it through to completion. I focused on whether the solution actually made the process easier, not only whether the dashboard had been built.
+Opportunity Mindset
+I have looked for ways to improve the way we work, rather than only completing the task as it currently exists. The APP Forms QA work was a good case where repeated manual checking could be turned into a more consistent review process. I treated that as an opportunity to reduce avoidable rework and create an approach that could also be considered for other forms, such as NPF1.
+Simplify
+I have focused on making complex information easier for others to understand and act on. With the FPS Daily NSC Peak Usage work, I helped present participant usage in a clearer way so stakeholders could understand patterns and pressure points more quickly. The aim was to reduce the need for repeated explanation and make the insight easier to use in day to day decision making. .
+
 
 
 I improved the validation process for UK Finance submissions by introducing additional quality checks and refining the review process. This has improved the accuracy and consistency of monthly submissions, reduced follow up queries, and strengthened our relationship with a key supplier through a more reliable service. I also led the development of the new Payment Infrastructure Tubemap report to support operational resilience during incidents. The report provides stakeholders with timely and reliable information, helping them make informed decisions and increasing confidence in the data used during incident management.
