@@ -1,3 +1,250 @@
+# NSC Plan Review Measures — v2.1 Patch
+
+Fixes: event window anchored to the plan quarter (kills the 2023/blank/reversed-dates bugs),
+weekday reference widened from single SPLY date to PY same-quarter same-day-class,
+reviewer gating (blank [Reviewer] → no line comments, overall = not approved),
+and the final Approved / Not Approved decision measure.
+
+> **Model check first (the £45bn bug):** the same-date-range peak returned ~£45–48bn because the
+> actuals fact aggregated ALL participants — the plan row's participant filter is not reaching the
+> actuals table. Confirm both `Fact_Quarterly_Plans` and the actuals fact relate to the SAME
+> institution dimension (your Institution ID slicer sitting at "All" is the tell). If they use two
+> different dims, bridge them — no measure below can compensate for that.
+
+---
+
+## 1. Applicable Reference Peak | PY Comparable Days (widened)
+
+Replaces the single-date SAMEPERIODLASTYEAR with the whole previous-year same quarter,
+restricted to the same day class. Stable per day class, matches the procedure and the
+participants' justification basis.
+
+```dax
+Applicable Reference Peak | PY Comparable Days =
+-- PY same-quarter peak restricted to the SAME day class (peak vs non-peak),
+-- evaluated over the WHOLE comparable quarter, not the single equivalent date.
+VAR IsPeakDayFlag     = SELECTEDVALUE ( 'Date'[Peak Day Flag] )
+VAR QuarterStartDate  =
+    CALCULATE ( MAX ( 'Fact_Quarterly_Plans'[Quarter Start] ), ALLSELECTED ( 'Fact_Quarterly_Plans' ) )
+VAR QuarterEndDate    = EOMONTH ( QuarterStartDate, 3 )
+VAR PYQuarterStart    = EDATE ( QuarterStartDate, -12 )
+VAR PYQuarterEnd      = EDATE ( QuarterEndDate, -12 )
+RETURN
+    CALCULATE (
+        [Peak Position],
+        REMOVEFILTERS ( 'Date' ),
+        'Date'[Date] >= PYQuarterStart
+            && 'Date'[Date] <= PYQuarterEnd,
+        'Date'[Peak Day Flag] = IsPeakDayFlag
+    )
+```
+
+If `Peak Day Flag` text varies year to year (e.g. contains dates), classify on blank vs non-blank
+instead: `ISBLANK ( 'Date'[Peak Day Flag] ) = ISBLANK ( IsPeakDayFlag )`.
+
+---
+
+## 2. Plan Line Review Comment (event block fixed + reviewer gating)
+
+```dax
+Plan Line Review Comment =
+VAR ReviewerName = [Reviewer]
+
+VAR PlannedNSCForLine      = SELECTEDVALUE ( 'Fact_Quarterly_Plans'[Proposed NSC] )
+VAR LineJustification      = SELECTEDVALUE ( 'Fact_Quarterly_Plans'[Justification] )
+VAR CurrentHolidayName     = SELECTEDVALUE ( 'Date'[Working_Day_Before_Holiday_Flag] )
+VAR IsEventLine            = NOT ISBLANK ( CurrentHolidayName )
+VAR GrowthUpliftMultiplier = 1 + [Payment Growth %]
+
+-- Anchor everything to the plan quarter (fixes wrong-year and spanning-window bugs)
+VAR QuarterStartDate =
+    CALCULATE ( MAX ( 'Fact_Quarterly_Plans'[Quarter Start] ), ALLSELECTED ( 'Fact_Quarterly_Plans' ) )
+VAR QuarterEndDate   = EOMONTH ( QuarterStartDate, 3 )
+
+VAR MissingJustificationNote =
+    IF (
+        ISBLANK ( LineJustification ),
+        " No justification provided for this entry — request the Participant's reasoning before approval.",
+        ""
+    )
+
+------------------------------------------------------------------
+-- WEEKDAY / NON-EVENT LINES
+------------------------------------------------------------------
+VAR ComparableReferencePeak = [Applicable Reference Peak | PY Comparable Days]
+VAR WeekdayRequiredCover    = ComparableReferencePeak * GrowthUpliftMultiplier
+VAR WeekdayHeadroom         = PlannedNSCForLine - WeekdayRequiredCover
+VAR WeekdayComment =
+    IF (
+        WeekdayHeadroom >= 0,
+        "Sufficient against NSC + Growth.",
+        "Insufficient against NSC + Growth — shortfall of c"
+            & FORMAT ( - WeekdayHeadroom, "£#,##0,," ) & "m vs required "
+            & FORMAT ( WeekdayRequiredCover, "£#,##0" )
+            & " (PY same-quarter, same day-class peak of "
+            & FORMAT ( ComparableReferencePeak, "£#,##0" )
+            & " + " & FORMAT ( [Payment Growth %], "0.00%" ) & " growth). Query with participant."
+    )
+
+------------------------------------------------------------------
+-- EVENT LINES — window restricted to THIS quarter's instance
+------------------------------------------------------------------
+VAR CurrentHolidayDates =
+    CALCULATETABLE (
+        VALUES ( 'Date'[Date] ),
+        REMOVEFILTERS ( 'Date' ),
+        'Date'[Working_Day_Before_Holiday_Flag] = CurrentHolidayName,
+        'Date'[Date] >= QuarterStartDate
+            && 'Date'[Date] <= QuarterEndDate
+    )
+VAR EventWindowStart = MINX ( CurrentHolidayDates, 'Date'[Date] )
+VAR EventWindowEnd   = MAXX ( CurrentHolidayDates, 'Date'[Date] )
+
+-- (a) Same-named holiday, previous year — restricted to a ±60-day band around
+--     the anniversary so a same-named event elsewhere in the year can't leak in
+VAR PYAnniversary = EDATE ( EventWindowStart, -12 )
+VAR PreviousYearHolidayDates =
+    CALCULATETABLE (
+        VALUES ( 'Date'[Date] ),
+        REMOVEFILTERS ( 'Date' ),
+        'Date'[Working_Day_Before_Holiday_Flag] = CurrentHolidayName,
+        'Date'[Date] >= PYAnniversary - 60
+            && 'Date'[Date] <= PYAnniversary + 60
+    )
+VAR PYNamedHolidayPeak =
+    CALCULATE ( [Peak Position], REMOVEFILTERS ( 'Date' ), PreviousYearHolidayDates )
+VAR PYNamedHolidayPeakDate =
+    VAR DailyPeaks =
+        CALCULATETABLE (
+            ADDCOLUMNS ( PreviousYearHolidayDates, "@DailyPeak", [Peak Position] ),
+            REMOVEFILTERS ( 'Date' )
+        )
+    RETURN MAXX ( TOPN ( 1, DailyPeaks, [@DailyPeak], DESC ), 'Date'[Date] )
+VAR PYNamedWindowStart = MINX ( PreviousYearHolidayDates, 'Date'[Date] )
+VAR PYNamedWindowEnd   = MAXX ( PreviousYearHolidayDates, 'Date'[Date] )
+VAR PYNamedEventFound  = NOT ISBLANK ( PYNamedHolidayPeak )
+
+-- (b) Same calendar date range, previous year
+VAR PYSameDateRangeStart = EDATE ( EventWindowStart, -12 )
+VAR PYSameDateRangeEnd   = EDATE ( EventWindowEnd, -12 )
+VAR PYSameDateRangePeak =
+    CALCULATE (
+        [Peak Position],
+        REMOVEFILTERS ( 'Date' ),
+        'Date'[Date] >= PYSameDateRangeStart
+            && 'Date'[Date] <= PYSameDateRangeEnd
+    )
+VAR PYSameDateRangePeakDate =
+    VAR SameDateDailyPeaks =
+        CALCULATETABLE (
+            ADDCOLUMNS (
+                CALCULATETABLE (
+                    VALUES ( 'Date'[Date] ),
+                    REMOVEFILTERS ( 'Date' ),
+                    'Date'[Date] >= PYSameDateRangeStart
+                        && 'Date'[Date] <= PYSameDateRangeEnd
+                ),
+                "@DailyPeak", [Peak Position]
+            ),
+            REMOVEFILTERS ( 'Date' )
+        )
+    RETURN MAXX ( TOPN ( 1, SameDateDailyPeaks, [@DailyPeak], DESC ), 'Date'[Date] )
+
+VAR GoverningEventPeak      = MAX ( PYNamedHolidayPeak, PYSameDateRangePeak )
+VAR EventRequiredCover      = GoverningEventPeak * GrowthUpliftMultiplier
+VAR EventSurplusOrShortfall = PlannedNSCForLine - EventRequiredCover
+
+VAR NamedEventSentence =
+    IF (
+        PYNamedEventFound,
+        FORMAT ( YEAR ( PYNamedWindowStart ), "0" ) & " " & CurrentHolidayName
+            & " period " & FORMAT ( PYNamedWindowStart, "dd MMM" )
+            & "–" & FORMAT ( PYNamedWindowEnd, "dd MMM" )
+            & " — max usage was on " & FORMAT ( PYNamedHolidayPeakDate, "dd MMM" )
+            & " at " & FORMAT ( PYNamedHolidayPeak, "£#,##0.00" ) & ". ",
+        "No same-named event found in the previous year — comparison based on the equivalent calendar dates only. "
+    )
+
+VAR EventComment =
+    NamedEventSentence
+        & "Same dates " & FORMAT ( PYSameDateRangeStart, "dd MMM" )
+        & "–" & FORMAT ( PYSameDateRangeEnd, "dd MMM yyyy" )
+        & " max usage peaked on " & FORMAT ( PYSameDateRangePeakDate, "dd MMM" )
+        & " at " & FORMAT ( PYSameDateRangePeak, "£#,##0.00" ) & ". "
+        & "With growth of " & FORMAT ( [Payment Growth %], "0.00%" )
+        & " the required cover is " & FORMAT ( EventRequiredCover, "£#,##0" )
+        & ", therefore " & FORMAT ( PlannedNSCForLine, "£#,##0,," ) & "m "
+        & IF (
+            EventSurplusOrShortfall >= 0,
+            "would be sufficient (surplus of c"
+                & FORMAT ( EventSurplusOrShortfall, "£#,##0,," ) & "m).",
+            "would NOT be sufficient — shortfall of c"
+                & FORMAT ( - EventSurplusOrShortfall, "£#,##0,," ) & "m. Query with participant."
+        )
+
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK ( ReviewerName ), BLANK (),          -- not yet reviewed by an SPE: no line commentary
+        ISBLANK ( PlannedNSCForLine ), BLANK (),
+        ( IF ( IsEventLine, EventComment, WeekdayComment ) & MissingJustificationNote )
+    )
+```
+
+---
+
+## 3. Plan Review Decision (new — final Approved / Not Approved)
+
+```dax
+Plan Review Decision =
+VAR ReviewerName = [Reviewer]
+VAR RAGStatus    = [Plan Review RAG]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK ( ReviewerName ), "Not Approved",
+        RAGStatus = "RED", "Not Approved",
+        "Approved"
+    )
+```
+
+---
+
+## 4. Plan Review Commentary (reviewer gate at the top)
+
+Add this immediately after the existing VAR block, replacing the current RETURN with:
+
+```dax
+VAR ReviewerName = [Reviewer]
+RETURN
+    IF (
+        ISBLANK ( ReviewerName ),
+        "Not approved — this plan has not been reviewed by an SPE.",
+        -- ...existing full RETURN expression unchanged from v2...
+    )
+```
+
+---
+
+## Notes
+
+- Both PY lookups are now anchored: the named-event lookup to a ±60-day band around the
+  anniversary of THIS quarter's event window, the same-dates lookup via EDATE(-12) on both ends,
+  which also guarantees start ≤ end (fixes "24–22 May").
+- The weekday reference change means every non-event line in a quarter of the same day class gets
+  the SAME required cover — verdicts will no longer flip line-to-line on single-date noise. If you
+  want the old behaviour retained for comparison, keep the previous measure as
+  `Applicable Reference Peak | PY Same Date` in the display folder.
+- Reviewer gating assumes a `[Reviewer]` measure returning blank when unreviewed. If Reviewer is a
+  column on the tracker table, wrap it: `Reviewer = SELECTEDVALUE ( 'Review_Tracker'[Reviewer] )`.
+- The £45bn magnitude is a MODEL issue: verify the actuals fact and the plans fact share one
+  institution dimension so participant context survives `REMOVEFILTERS ( 'Date' )`.
+
+
+
+
+
+
 # NSC Plan Review Measures — v2 (aligned to your existing model + procedure + sample output)
 
 Uses YOUR names: `Fact_Quarterly_Plans[Proposed NSC]`, `[New NSC]`, `[Quarter Start]`,
