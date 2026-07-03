@@ -1,3 +1,19 @@
+Headcount Percentage Difference = 
+VAR up_arrow = UNICHAR(129137)
+VAR down_arrow = UNICHAR(129139)
+VAR right_arrow = UNICHAR(129130)
+VAR _current = [Latest Headcount]
+VAR _previous = [Earliest Headcount]
+VAR _growth = DIVIDE (_current - _previous, _previous,0)
+RETURN
+    SWITCH(TRUE(),
+        _current = BLANK() && _previous = BLANK(), BLANK(),
+        _growth = 0, right_arrow & " " &  FORMAT(_growth, "0.0%"),
+        _growth <0, down_arrow & " " &  FORMAT(_growth, "0.0%"), 
+        up_arrow & " " &  FORMAT(_growth, "0.0%")
+    )
+
+
 # NSC Plan Review Measures — v2.1 Patch
 
 Fixes: event window anchored to the plan quarter (kills the 2023/blank/reversed-dates bugs),
