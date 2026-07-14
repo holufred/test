@@ -1,17 +1,16 @@
-Headcount Percentage Difference = 
-VAR up_arrow = UNICHAR(129137)
-VAR down_arrow = UNICHAR(129139)
-VAR right_arrow = UNICHAR(129130)
-VAR _current = [Latest Headcount]
-VAR _previous = [Earliest Headcount]
-VAR _growth = DIVIDE (_current - _previous, _previous,0)
-RETURN
-    SWITCH(TRUE(),
-        _current = BLANK() && _previous = BLANK(), BLANK(),
-        _growth = 0, right_arrow & " " &  FORMAT(_growth, "0.0%"),
-        _growth <0, down_arrow & " " &  FORMAT(_growth, "0.0%"), 
-        up_arrow & " " &  FORMAT(_growth, "0.0%")
-    )
+ Hi Garima and Steven,
+
+We've received a query from Yousef at UK Finance regarding missing Credit and Charge data for 2015 and 2016.
+
+I checked CAMIS_PROD, including both the staging tables and the PF1_v7 view, and there is no Credit or Charge data from January 2015 to April 2017. However, during that period there is a combined Credit and Charge card type with values, which then disappears from May 2017 onwards.
+
+Could you confirm whether there was a known issue during that period, and whether the combined Credit and Charge card type should be used instead for Yousef's analysis? I've included my findings in the Analysis tab of the attached Excel file.
+
+I also couldn't access data earlier than May 2017 through the CAMIS web interface, and I've raised a TopDesk ticket to investigate this.
+
+Thanks,
+Kayode
+
 
 
 # NSC Plan Review Measures — v2.1 Patch
