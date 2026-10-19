@@ -1,22 +1,14 @@
-
-Show Item = 
-VAR _scope  = SELECTEDVALUE ( 'View Scope'[Scope], "All" )
-VAR _me     = USERPRINCIPALNAME()
-VAR _myDept =
-    CALCULATE (
-        SELECTEDVALUE ( Dim_User[Department] ),
-        REMOVEFILTERS ( Dim_User ),
-        Dim_User[Email] = _me
-    )
-VAR _matches =
-    SWITCH (
-        _scope,
-        "My Items",      CALCULATE ( COUNTROWS ( Dim_User ), Dim_User[Email] = _me ),
-        "My Department", CALCULATE ( COUNTROWS ( Dim_User ), Dim_User[Department] = _myDept ),
-        COUNTROWS ( Dim_User )
-    )
-RETURN
-    INT ( NOT ISBLANK ( _matches ) )
+@and(
+  not(equals(item()?['ID'], triggerBody()?['ID'])),
+  greaterOrEquals(
+    ticks(item()?['Modified']),
+    ticks(addMinutes(triggerBody()?['Modified'], -5))
+  ),
+  lessOrEquals(
+    ticks(item()?['Modified']),
+    ticks(triggerBody()?['Modified'])
+  )
+)
 
 
 # NSC Plan Review Measures — v2.1 Patch
